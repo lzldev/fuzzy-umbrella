@@ -10,6 +10,7 @@ serde_json = { version = "1", features = ["raw_value"] }
 vercel_runtime = { version = "1.1.1" }
 svix = "1.21.0"
 libsql = "0.3.3"
+serde = "1.0.197"
 
 
 # You can specify a library for shared logic here (optional)

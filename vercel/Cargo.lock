@@ -1156,6 +1156,7 @@ name = "mediathing-rust"
 version = "0.1.0"
 dependencies = [
  "libsql",
+ "serde",
  "serde_json",
  "svix",
  "tokio",

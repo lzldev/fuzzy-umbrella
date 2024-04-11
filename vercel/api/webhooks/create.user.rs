@@ -1,4 +1,5 @@
 use libsql::{self, Builder};
+use mediathing_rust::WebhookMessage;
 use std::env;
 
 use serde_json::json;
@@ -11,6 +12,7 @@ async fn main() -> Result<(), Error> {
 }
 
 pub async fn handler(req: Request) -> Result<Response<Body>, Error> {
+    let skip = env::var("SKIP_VERIFY").is_ok();
     let wh_secret = env::var("WEBHOOK_SECRET").expect("Webhook secret not set");
     let turso_url = env::var("TURSO_CONNECTION_URL").expect("TURSO_CONNECTION_URL must be set");
     let turso_token = env::var("TURSO_AUTH_TOKEN").expect("TURSO_AUTH_TOKEN must be set");
@@ -20,16 +22,34 @@ pub async fn handler(req: Request) -> Result<Response<Body>, Error> {
     let verify = wh.verify(req.body(), req.headers());
 
     println!("[create.user]\n{:?}", req);
-    if let Err(_) = verify {
-        println!("[create.user] Invalid signature");
+    if !skip {
+        if let Err(_) = verify {
+            println!("[create.user] Invalid signature");
+            return Ok(Response::builder().status(StatusCode::BAD_REQUEST).body(
+                json!({
+                    "error": "Invalid signature",
+                })
+                .to_string()
+                .into(),
+            )?);
+        }
+    }
+
+    let user = serde_json::from_slice::<WebhookMessage>(req.body().as_ref());
+
+    if let Err(err) = user {
         return Ok(Response::builder().status(StatusCode::BAD_REQUEST).body(
             json!({
-              "error": "Invalid signature",
+                "message":err.to_string(),
             })
             .to_string()
             .into(),
         )?);
     }
+
+    let user = user.unwrap();
+
+    println!("[create.user] {:?}", user);
 
     let db = Builder::new_remote(turso_url, turso_token).build().await?;
     let conn = db.connect().unwrap();
