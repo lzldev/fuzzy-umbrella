@@ -27,6 +27,12 @@ export default function Index() {
           </a>
         </li>
       </ul>
+      <ul>
+        <li>
+          <a href="counter">Counter</a>
+          <a href="notCounter">Counter</a>
+        </li>
+      </ul>
     </div>
   );
 }
