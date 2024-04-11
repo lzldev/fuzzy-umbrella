@@ -4,6 +4,7 @@ import {
   SignedOut,
   SignInButton,
   UserButton,
+  UserProfile,
 } from "@clerk/clerk-react";
 
 export const Route = createFileRoute("/login")({
@@ -17,7 +18,8 @@ function Login() {
         <SignInButton />
       </SignedOut>
       <SignedIn>
-        <UserButton />
+        <UserButton showName />
+        <UserProfile />
       </SignedIn>
     </div>
   );
