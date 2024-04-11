@@ -3,7 +3,8 @@ import { PingService } from './ping.service';
 
 @Controller('ping')
 export class PingController {
-  constructor(private readonly pingService: PingService) {}
+  private readonly pingService: PingService;
+
   @Get()
   ping() {
     return {
