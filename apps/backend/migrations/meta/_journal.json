@@ -1,0 +1,13 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1712842709964,
+      "tag": "0000_living_kronos",
+      "breakpoints": true
+    }
+  ]
+}
