@@ -1,12 +1,8 @@
-import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import react from "@vitejs/plugin-react";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    remix({
-      ssr: false,
-    }),
-    tsconfigPaths(),
-  ],
+  plugins: [react(), TanStackRouterVite()],
 });
