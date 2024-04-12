@@ -23,5 +23,9 @@ name = "ping"
 path = "api/ping.rs"
 
 [[bin]]
-name = "user_create"
-path = "api/webhooks/create.user.rs"
+name = "user_created"
+path = "api/webhooks/user.created.rs"
+
+[[bin]]
+name = "user_updated"
+path = "api/webhooks/user.updated.rs"

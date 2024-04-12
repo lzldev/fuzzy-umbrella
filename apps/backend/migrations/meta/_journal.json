@@ -15,6 +15,13 @@
       "when": 1712883863138,
       "tag": "0001_fast_the_fallen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1712919415002,
+      "tag": "0002_loud_ink",
+      "breakpoints": true
     }
   ]
 }

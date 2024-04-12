@@ -1,60 +1,26 @@
-use serde::{Deserialize, Serialize};
+mod schema;
+use std::env;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct WebhookMessage {
-    #[serde(rename = "type")]
-    pub _type: String,
-    pub object: String,
-    pub data: CreateUserEventData,
-}
+pub use schema::*;
+use svix::webhooks::{Webhook, WebhookError};
+use vercel_runtime::Request;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CreateUserEventData {
-    pub id: String,
-    pub object: String,
-    pub birthday: String,
-    pub username: Option<String>,
-    pub first_name: Option<String>,
-    pub last_name: Option<String>,
-    pub external_id: Option<String>,
-    pub primary_email_address_id: Option<String>,
-    pub primary_phone_number_id: Option<String>,
-    pub primary_web3_wallet_id: Option<String>,
-    pub image_url: Option<String>,
-    pub gender: String,
-    pub email_addresses: Vec<ClerkEmail>,
-    pub password_enabled: bool,
-    pub two_factor_enabled: bool,
-    pub created_at: f64,
-    pub updated_at: f64,
-    pub last_sign_in_at: f64,
-    pub external_accounts: Vec<ClerkExternalAccount>,
-}
+pub fn verify_webhook(req: &Request) -> Result<(), WebhookError> {
+    let wh_skip_verify = env::var("SKIP_VERIFY").is_ok();
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ClerkExternalAccount {
-    pub id: String,
-    pub object: String,
-    pub provider: String,
-    pub identification_id: String,
-    pub provider_user_id: String,
-    pub approved_scopes: String,
-    pub email_address: String,
-    pub first_name: String,
-    pub last_name: String,
-    pub image_url: String,
-}
+    if wh_skip_verify {
+        eprintln!("[Webhook] Skipping signature verification");
+        return Ok(());
+    }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ClerkEmail {
-    pub id: String,
-    pub object: String,
-    pub email_address: String,
-    pub verification: ClerkEmailVerfication,
-}
+    let wh_secret = env::var("WEBHOOK_SECRET").expect("WEBHOOK_SECRET not set");
+    let wh = Webhook::new(&wh_secret).expect("WEBHOOK_SECRET not valid");
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ClerkEmailVerfication {
-    pub status: String,
-    pub strategy: String,
+    let verify = wh.verify(req.body(), req.headers());
+
+    if verify.is_err() {
+        return verify;
+    }
+
+    return Ok(());
 }
