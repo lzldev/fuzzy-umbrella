@@ -2,13 +2,13 @@ import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 
-export const createConnection = () => {
+export function createConnection(connectingUrl: string, authToken: string) {
   const client = createClient({
-    url: process.env.TURSO_CONNECTION_URL!,
-    authToken: process.env.TURSO_AUTH_TOKEN!,
+    url: connectingUrl,
+    authToken: authToken,
   });
 
   return drizzle(client);
-};
+}
 
-export type Connection = ReturnType<typeof createConnection>;
+export type DB = ReturnType<typeof createConnection>;
