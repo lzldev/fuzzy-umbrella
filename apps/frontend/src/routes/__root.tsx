@@ -1,26 +1,30 @@
-import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
-
-import { ClerkProvider } from "@clerk/clerk-react";
+import {
+  Outlet,
+  createRootRoute,
+  createRootRouteWithContext,
+} from "@tanstack/react-router";
 
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-// Import your publishable key
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+import { Container } from "../components/Container";
+import { Navbar } from "../components/Navbar";
+import type { useAuth } from "@clerk/clerk-react";
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Publishable Key");
-}
+export type RouterContext = {
+  auth: ReturnType<typeof useAuth>;
+};
 
-export const Route = createRootRouteWithContext<{}>()({
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
 });
 
 function RootComponent() {
   return (
-    <div>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <>
+      <Container>
+        <Navbar />
         <Outlet />
-      </ClerkProvider>
+      </Container>
       <TanStackRouterDevtools position="bottom-right" />
-    </div>
+    </>
   );
 }
