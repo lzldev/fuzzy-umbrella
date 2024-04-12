@@ -1,60 +1,60 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WebhookMessage {
     #[serde(rename = "type")]
-    _type: String,
-    object: String,
-    data: CreateUserEventData,
+    pub _type: String,
+    pub object: String,
+    pub data: CreateUserEventData,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreateUserEventData {
-    id: String,
-    object: String,
-    birthday: String,
-    username: Option<String>,
-    first_name: Option<String>,
-    last_name: Option<String>,
-    external_id: Option<String>,
-    primary_email_address_id: Option<String>,
-    primary_phone_number_id: Option<String>,
-    primary_web3_wallet_id: Option<String>,
-    image_url: Option<String>,
-    gender: String,
-    email_addresses: Vec<ClerkEmail>,
-    password_enabled: bool,
-    two_factor_enabled: bool,
-    created_at: f64,
-    updated_at: f64,
-    last_sign_in_at: f64,
-    external_accounts: Vec<ClerkExternalAccount>,
+    pub id: String,
+    pub object: String,
+    pub birthday: String,
+    pub username: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub external_id: Option<String>,
+    pub primary_email_address_id: Option<String>,
+    pub primary_phone_number_id: Option<String>,
+    pub primary_web3_wallet_id: Option<String>,
+    pub image_url: Option<String>,
+    pub gender: String,
+    pub email_addresses: Vec<ClerkEmail>,
+    pub password_enabled: bool,
+    pub two_factor_enabled: bool,
+    pub created_at: f64,
+    pub updated_at: f64,
+    pub last_sign_in_at: f64,
+    pub external_accounts: Vec<ClerkExternalAccount>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClerkExternalAccount {
-    id: String,
-    object: String,
-    provider: String,
-    identification_id: String,
-    provider_user_id: String,
-    approved_scopes: String,
-    email_address: String,
-    first_name: String,
-    last_name: String,
-    image_url: String,
+    pub id: String,
+    pub object: String,
+    pub provider: String,
+    pub identification_id: String,
+    pub provider_user_id: String,
+    pub approved_scopes: String,
+    pub email_address: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub image_url: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClerkEmail {
-    id: String,
-    object: String,
-    email_address: String,
-    verification: ClerkEmailVerfication,
+    pub id: String,
+    pub object: String,
+    pub email_address: String,
+    pub verification: ClerkEmailVerfication,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClerkEmailVerfication {
-    status: String,
-    strategy: String,
+    pub status: String,
+    pub strategy: String,
 }

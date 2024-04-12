@@ -3,8 +3,13 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey(),
-  name: text('name').notNull(),
   email: text('email').unique().notNull(),
+  image_url: text('image_url'),
+  clerk_username: text('clerk_username').notNull(),
+  clerk_id: text('clerk_id').unique().notNull(),
+  clerk_updated_at: integer('clerk_updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const posts = sqliteTable('posts', {
