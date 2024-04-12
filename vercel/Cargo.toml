@@ -6,10 +6,11 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1", features = ["macros"] }
 serde_json = { version = "1", features = ["raw_value"] }
+# Enables Remote only compilation of turso.
+libsql = { version = "0.3.3" , features = ["remote"]}
 # Documentation: https://docs.rs/vercel_runtime/latest/vercel_runtime
 vercel_runtime = { version = "1.1.1" }
 svix = "1.21.0"
-libsql = "0.3.3"
 serde = "1.0.197"
 
 
@@ -23,9 +24,5 @@ name = "ping"
 path = "api/ping.rs"
 
 [[bin]]
-name = "user_created"
-path = "api/webhooks/user.created.rs"
-
-[[bin]]
-name = "user_updated"
-path = "api/webhooks/user.updated.rs"
+name = "clerk"
+path = "api/webhooks/clerk.rs"

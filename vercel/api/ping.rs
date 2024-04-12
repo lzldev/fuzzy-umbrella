@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use serde_json::json;
 use vercel_runtime::{run, Body, Error, Request, Response, StatusCode};
 
@@ -12,7 +14,8 @@ pub async fn handler(_req: Request) -> Result<Response<Body>, Error> {
         .header("Content-Type", "application/json")
         .body(
             json!({
-              "data": "pong"
+              "data": "pong",
+                "time": format!("{:?}", SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis())
             })
             .to_string()
             .into(),
