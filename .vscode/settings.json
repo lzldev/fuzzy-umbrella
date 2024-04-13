@@ -1,4 +1,5 @@
 {
+  "editor.defaultFormatter": "biomejs.biome",
   "eslint.workingDirectories": [
     {
       "mode": "auto"
