@@ -1,5 +1,5 @@
 import { type FactoryProvider, Inject, applyDecorators } from '@nestjs/common'
-import { EnvProvider } from '~/config/env.provider'
+import { EnvProvider } from '~/app/config/env.provider'
 import { createConnection } from '~/lib/db/connection'
 
 export const DatabaseProviderToken = 'DATABASE'

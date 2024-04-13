@@ -1,5 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing'
-import { ConfigModule } from '~/config/config.module'
+import { ConfigModule } from '~/app/config/config.module'
 import type { Connection } from '~/lib/db/connection'
 import { DatabaseProvider, DatabaseProviderToken } from './database.provider'
 
