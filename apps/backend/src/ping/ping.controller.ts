@@ -1,6 +1,5 @@
 import { Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { PingService } from './ping.service';
-import { CookieRecord, Cookies } from '~/lib/Cookies';
 
 @Controller('ping')
 export class PingController {
@@ -8,8 +7,7 @@ export class PingController {
   private readonly pingService: PingService;
 
   @Get()
-  ping(@Cookies() cookies: CookieRecord) {
-    console.log(cookies);
+  ping() {
     return {
       data: this.pingService.entries(),
       time: new Date().toISOString(),

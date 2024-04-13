@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { PingModule } from '../src/ping/ping.module';
+import { PingModule } from '~/ping/ping.module';
 
 const setupModule = async () => {
   const moduleFixture: TestingModule = await Test.createTestingModule({

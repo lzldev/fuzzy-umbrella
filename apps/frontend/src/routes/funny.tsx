@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FlexContainer } from "../components/FlexContainer";
 import { ofetch } from "ofetch";
+import { FlexContainer } from "~/components/FlexContainer";
 
 export const Route = createFileRoute("/funny")({
   component: FileUploadForm,

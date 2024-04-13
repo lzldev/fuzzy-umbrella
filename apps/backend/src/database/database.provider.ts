@@ -1,13 +1,13 @@
-import { Inject, applyDecorators } from '@nestjs/common';
-import { EnvProvider } from 'src/config/env.provider';
-import { createConnection } from 'src/lib/db/connection';
+import { FactoryProvider, Inject, applyDecorators } from '@nestjs/common';
+import { EnvProvider } from '~/config/env.provider';
+import { createConnection } from '~/lib/db/connection';
 
-export const DatabaseProviderInject = 'DATABASE';
+export const DatabaseProviderToken = 'DATABASE';
 
-export const DatabaseProvider = {
+export const DatabaseProvider: FactoryProvider = {
   inject: [EnvProvider],
-  provide: DatabaseProviderInject,
-  useFactory: async (config: EnvProvider) => {
+  provide: DatabaseProviderToken,
+  useFactory: (config: EnvProvider) => {
     return createConnection(
       config.turso_connection_url,
       config.turso_auth_token,
@@ -16,5 +16,5 @@ export const DatabaseProvider = {
 };
 
 export function Database() {
-  return applyDecorators(Inject(DatabaseProviderInject));
+  return applyDecorators(Inject(DatabaseProviderToken));
 }

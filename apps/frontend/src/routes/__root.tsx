@@ -1,9 +1,9 @@
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { Container } from "../components/Container";
-import { Navbar } from "../components/Navbar";
 import type { useAuth } from "@clerk/clerk-react";
+import { Container } from "~/components/Container";
+import { Navbar } from "~/components/Navbar";
 
 export type RouterContext = {
   auth: ReturnType<typeof useAuth>;

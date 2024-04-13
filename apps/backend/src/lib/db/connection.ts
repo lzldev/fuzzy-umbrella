@@ -11,4 +11,4 @@ export function createConnection(connectingUrl: string, authToken: string) {
   return drizzle(client);
 }
 
-export type DB = ReturnType<typeof createConnection>;
+export type Connection = ReturnType<typeof createConnection>;
