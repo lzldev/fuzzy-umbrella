@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import viteLogo from '/vite.svg'
 import reactLogo from '~/assets/react.svg'
 import { FlexContainer } from '~/components/FlexContainer'
+import viteLogo from '/vite.svg'
 
 export const Route = createFileRoute('/')({
   component: Index,

@@ -1,6 +1,6 @@
+import { createClient } from '@libsql/client'
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/libsql'
-import { createClient } from '@libsql/client'
 
 export function createConnection(connectingUrl: string, authToken: string) {
   const client = createClient({

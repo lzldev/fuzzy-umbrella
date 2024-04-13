@@ -1,7 +1,7 @@
 import {
-  SignedOut,
   SignInButton,
   SignedIn,
+  SignedOut,
   UserButton,
 } from '@clerk/clerk-react'
 import { Link } from '@tanstack/react-router'

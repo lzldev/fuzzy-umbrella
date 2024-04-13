@@ -1,3 +1,5 @@
+import { ReadStream, createWriteStream } from 'node:fs'
+import { resolve } from 'node:path'
 import {
   Body,
   Controller,
@@ -7,12 +9,10 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common'
-import { AppService } from './app.service'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { IsString } from 'class-validator'
+import { AppService } from './app.service'
 import { EnvProvider } from './config/env.provider'
-import { ReadStream, createWriteStream } from 'node:fs'
-import { resolve } from 'node:path'
 import { UploadValidationPipe } from './upload/upload.validation.pipe'
 
 class FunnyForm {

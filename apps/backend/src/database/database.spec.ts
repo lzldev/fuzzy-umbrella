@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing'
-import { DatabaseProvider, DatabaseProviderToken } from './database.provider'
-import type { Connection } from '~/lib/db/connection'
 import { ConfigModule } from '~/config/config.module'
+import type { Connection } from '~/lib/db/connection'
+import { DatabaseProvider, DatabaseProviderToken } from './database.provider'
 
 describe('Database', () => {
   let provider: Connection
