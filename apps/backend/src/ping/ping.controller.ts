@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { PingService } from './ping.service';
 
 @Controller('ping')
 export class PingController {
+  @Inject()
   private readonly pingService: PingService;
 
   @Get()

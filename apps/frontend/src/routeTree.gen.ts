@@ -11,11 +11,17 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as FunnyImport } from './routes/funny'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthProfileImport } from './routes/_auth/profile'
 
 // Create/Update Routes
+
+const FunnyRoute = FunnyImport.update({
+  path: '/funny',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const AuthRoute = AuthImport.update({
   id: '/_auth',
@@ -44,6 +50,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthImport
       parentRoute: typeof rootRoute
     }
+    '/funny': {
+      preLoaderRoute: typeof FunnyImport
+      parentRoute: typeof rootRoute
+    }
     '/_auth/profile': {
       preLoaderRoute: typeof AuthProfileImport
       parentRoute: typeof AuthImport
@@ -56,6 +66,7 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   AuthRoute.addChildren([AuthProfileRoute]),
+  FunnyRoute,
 ])
 
 /* prettier-ignore-end */
