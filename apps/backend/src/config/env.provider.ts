@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 const requiredFields = {
+  CORS_FRONTEND_ORIGIN: 'cors_frontend_origin',
   TURSO_CONNECTION_URL: 'turso_connection_url',
   TURSO_AUTH_TOKEN: 'turso_auth_token',
   CLERK_PUBLISHABLE_KEY: 'clerk_publishable_key',
@@ -27,6 +28,7 @@ export class EnvProvider {
   public readonly turso_auth_token: string;
   public readonly clerk_publishable_key: string;
   public readonly clerk_secret_key: string;
+  public readonly cors_frontend_origin: string;
 
   public readonly upload_location: string;
   public readonly max_upload_size: string;
