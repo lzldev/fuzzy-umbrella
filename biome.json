@@ -12,10 +12,12 @@
 		"enabled": true
 	},
 	"linter": {
+		"ignore": ["**/**/routeTree.gen.ts"],
 		"enabled": true,
 		"rules": {
 			"recommended": true,
 			"style": {
+				"useImportType": "off",
 				"noNonNullAssertion": "off"
 			}
 		}

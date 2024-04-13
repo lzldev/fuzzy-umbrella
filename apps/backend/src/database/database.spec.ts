@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { DatabaseProvider, DatabaseProviderToken } from './database.provider';
 import type { Connection } from '~/lib/db/connection';
 import { ConfigModule } from '~/config/config.module';

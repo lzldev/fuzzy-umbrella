@@ -7,10 +7,10 @@ import {
 	UploadedFile,
 	UseInterceptors,
 } from "@nestjs/common";
-import type { AppService } from "./app.service";
+import { AppService } from "./app.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { IsString } from "class-validator";
-import type { EnvProvider } from "./config/env.provider";
+import { EnvProvider } from "./config/env.provider";
 import { ReadStream, createWriteStream } from "node:fs";
 import { resolve } from "node:path";
 import { UploadValidationPipe } from "./upload/upload.validation.pipe";
