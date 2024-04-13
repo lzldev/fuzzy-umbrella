@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
-import { UploadValidationPipe } from './upload.validation.pipe';
+import { Module } from "@nestjs/common";
+import { UploadValidationPipe } from "./upload.validation.pipe";
 
 @Module({
-  imports: [],
-  providers: [UploadValidationPipe],
-  exports: [],
+	imports: [],
+	providers: [UploadValidationPipe],
+	exports: [],
 })
 export class UploadModule {}

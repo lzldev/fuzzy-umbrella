@@ -6,21 +6,21 @@ import { Container } from "~/components/Container";
 import { Navbar } from "~/components/Navbar";
 
 export type RouterContext = {
-  auth: ReturnType<typeof useAuth>;
+	auth: ReturnType<typeof useAuth>;
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  component: RootComponent,
+	component: RootComponent,
 });
 
 function RootComponent() {
-  return (
-    <>
-      <Container>
-        <Navbar />
-        <Outlet />
-      </Container>
-      <TanStackRouterDevtools position="bottom-right" />
-    </>
-  );
+	return (
+		<>
+			<Container>
+				<Navbar />
+				<Outlet />
+			</Container>
+			<TanStackRouterDevtools position="bottom-right" />
+		</>
+	);
 }
