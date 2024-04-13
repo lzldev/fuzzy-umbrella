@@ -1,7 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-const known_cookies = ['__session'] as const;
-type KnownCookies = (typeof known_cookies)[number];
+const knownCookies = ['__session'] as const;
+
+type KnownCookies = (typeof knownCookies)[number];
 
 export const Cookies = createParamDecorator<KnownCookies>(
   (data: KnownCookies | string, ctx: ExecutionContext) => {
@@ -10,5 +11,5 @@ export const Cookies = createParamDecorator<KnownCookies>(
   },
 );
 
-export type CookieRecord = Record<(typeof known_cookies)[number], string> &
+export type CookieRecord = Record<(typeof knownCookies)[number], string> &
   Record<string, string>;
