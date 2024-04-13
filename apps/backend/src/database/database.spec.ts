@@ -1,21 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseProvider, DatabaseProviderToken } from './database.provider';
-import type { Connection } from '~/lib/db/connection';
-import { ConfigModule } from '~/config/config.module';
+import { Test, type TestingModule } from '@nestjs/testing'
+import { ConfigModule } from '~/config/config.module'
+import type { Connection } from '~/lib/db/connection'
+import { DatabaseProvider, DatabaseProviderToken } from './database.provider'
 
 describe('Database', () => {
-  let provider: Connection;
+  let provider: Connection
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule],
       providers: [DatabaseProvider],
-    }).compile();
+    }).compile()
 
-    provider = module.get(DatabaseProviderToken);
-  });
+    provider = module.get(DatabaseProviderToken)
+  })
 
   it('should be defined', () => {
-    expect(provider).toBeDefined();
-  });
-});
+    expect(provider).toBeDefined()
+  })
+})

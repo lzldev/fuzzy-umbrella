@@ -1,18 +1,18 @@
 import {
-  ArgumentMetadata,
+  type ArgumentMetadata,
   HttpException,
   Injectable,
-  PipeTransform,
-} from '@nestjs/common';
+  type PipeTransform,
+} from '@nestjs/common'
 
 @Injectable()
 export class UploadValidationPipe implements PipeTransform {
-  transform(value: any, metadata: ArgumentMetadata) {
-    console.log(value);
-    console.log(`${(value.size / 1024 / 1024).toFixed(2)} mb`);
+  transform(value: Express.Multer.File, metadata: ArgumentMetadata) {
+    console.log(value)
+    console.log(`${(value.size / 1024 / 1024).toFixed(2)} mb`)
     if (value.size > 1024 * 1024 * 10) {
-      throw new HttpException('File too large', 413);
+      throw new HttpException('File too large', 413)
     }
-    return value;
+    return value
   }
 }

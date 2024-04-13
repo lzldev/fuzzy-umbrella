@@ -1,5 +1,5 @@
-import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey(),
@@ -10,7 +10,7 @@ export const users = sqliteTable('users', {
   clerk_updated_at: integer('clerk_updated_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-});
+})
 
 export const posts = sqliteTable('posts', {
   id: integer('id').primaryKey(),
@@ -19,13 +19,11 @@ export const posts = sqliteTable('posts', {
   userId: integer('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: text('created_at')
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
-});
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
+})
 
-export type InsertUser = typeof users.$inferInsert;
-export type SelectUser = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert
+export type SelectUser = typeof users.$inferSelect
 
-export type InsertPost = typeof posts.$inferInsert;
-export type SelectPost = typeof posts.$inferSelect;
+export type InsertPost = typeof posts.$inferInsert
+export type SelectPost = typeof posts.$inferSelect

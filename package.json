@@ -4,11 +4,15 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "lint": "biome lint **/**",
+    "lint:fix": "biome lint --apply **/**",
+    "format": "biome format **/**",
+    "format:write": "biome format --write **/**",
+    "check": "biome check **/**",
+    "check:write": "biome check --apply **/**"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
+    "@biomejs/biome": "1.6.4",
     "@repo/typescript-config": "workspace:*",
     "prettier": "^3.2.5",
     "turbo": "latest"

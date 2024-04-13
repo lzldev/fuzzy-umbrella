@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ofetch } from "ofetch";
-import { FlexContainer } from "~/components/FlexContainer";
+import { createFileRoute } from '@tanstack/react-router'
+import { ofetch } from 'ofetch'
+import { FlexContainer } from '~/components/FlexContainer'
 
-export const Route = createFileRoute("/funny")({
+export const Route = createFileRoute('/funny')({
   component: FileUploadForm,
-});
+})
 
 function FileUploadForm() {
   return (
@@ -22,10 +22,11 @@ function FileUploadForm() {
         </form>
         <div>
           <button
+            type="button"
             onClick={async () => {
-              await ofetch("http://localhost:3000/ping", {
-                credentials: "include",
-              });
+              await ofetch('http://localhost:3000/ping', {
+                credentials: 'include',
+              })
             }}
           >
             Send
@@ -33,5 +34,5 @@ function FileUploadForm() {
         </div>
       </div>
     </FlexContainer>
-  );
+  )
 }
