@@ -11,10 +11,10 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as AuthImport } from './routes/_auth'
-import { Route as AuthProfileImport } from './routes/_auth/profile'
 import { Route as FunnyImport } from './routes/funny'
+import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
+import { Route as AuthProfileImport } from './routes/_auth/profile'
 
 // Create/Update Routes
 
