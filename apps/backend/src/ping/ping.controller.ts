@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { PingService } from './ping.service';
-import { CookieRecord, Cookies } from '@/lib/Cookies';
+import { CookieRecord, Cookies } from '~/lib/Cookies';
 
 @Controller('ping')
 export class PingController {
