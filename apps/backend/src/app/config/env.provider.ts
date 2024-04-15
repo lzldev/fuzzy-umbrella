@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common'
 
 const requiredFields = {
+  AWS_REGION: 'aws_region',
+  AWS_ACCESS_KEY_ID: 'aws_access_key_id',
+  AWS_SECRET_ACCESS_KEY: 'aws_secret_access_key',
   CORS_FRONTEND_ORIGIN: 'cors_frontend_origin',
   TURSO_CONNECTION_URL: 'turso_connection_url',
   TURSO_AUTH_TOKEN: 'turso_auth_token',
@@ -24,6 +27,10 @@ const optionalFields = {
 
 @Injectable()
 export class EnvProvider {
+  public readonly aws_region: string
+  public readonly aws_access_key_id: string
+  public readonly aws_secret_access_key: string
+
   public readonly turso_connection_url: string
   public readonly turso_auth_token: string
   public readonly clerk_publishable_key: string

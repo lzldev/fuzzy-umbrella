@@ -1,10 +1,11 @@
 import { type FactoryProvider, Inject, applyDecorators } from '@nestjs/common'
 import { EnvProvider } from '~/app/config/env.provider'
-import { createConnection } from '~/lib/db/connection'
+import { Connection, createConnection } from '~/lib/db/connection'
 
-export const DatabaseProviderToken = 'DATABASE'
+export const DatabaseProviderToken = 'DATABASE_PROVIDER'
+export type DatabaseProvider = Connection
 
-export const DatabaseProvider: FactoryProvider = {
+export const DatabaseProviderFactory: FactoryProvider<DatabaseProvider> = {
   inject: [EnvProvider],
   provide: DatabaseProviderToken,
   useFactory: (config: EnvProvider) => {

@@ -17,6 +17,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "a11y": {
+        "all": "off"
+      },
       "style": {
         "useImportType": "off",
         "noNonNullAssertion": "off"

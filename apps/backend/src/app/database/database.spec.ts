@@ -1,7 +1,10 @@
 import { Test, type TestingModule } from '@nestjs/testing'
 import { ConfigModule } from '~/app/config/config.module'
 import type { Connection } from '~/lib/db/connection'
-import { DatabaseProvider, DatabaseProviderToken } from './database.provider'
+import {
+  DatabaseProviderFactory,
+  DatabaseProviderToken,
+} from './database.provider'
 
 describe('Database', () => {
   let provider: Connection
@@ -9,7 +12,7 @@ describe('Database', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule],
-      providers: [DatabaseProvider],
+      providers: [DatabaseProviderFactory],
     }).compile()
 
     provider = module.get(DatabaseProviderToken)
