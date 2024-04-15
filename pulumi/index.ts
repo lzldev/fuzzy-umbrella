@@ -7,6 +7,14 @@ const postsBucket = new aws.s3.Bucket('mediathing-posts',{
         allowedOrigins:['http://localhost:3000','http://localhost:5173'],
         allowedMethods:['POST'],
    }] 
-},{aliases:['mediathing-posts']})
+})
 
-export const bucketName = postsBucket.id
+const contentBucket = new aws.s3.Bucket('mediathing-content',{
+   corsRules:[{
+        allowedOrigins:['http://localhost:3000','http://localhost:5173'],
+        allowedMethods:['POST'],
+   }] 
+},{aliases:["urn:pulumi:dev::mediathing::aws:s3/bucket:Bucket::mediathing-content"]})
+
+export const posts_bucket_name = postsBucket.id
+export const content_bucket_name = contentBucket.id

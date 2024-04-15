@@ -1,0 +1,24 @@
+# [package]
+# name = "mediathing-serverless"
+# version = "0.1.0"
+# edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+resolver = '2'
+members = ["fn_http_test", "fn_s3_process", "mediathing"]
+
+[workspace.dependencies]
+serde = "1.0.197"
+serde_json = "1.0.115"
+tokio = { version = "1", features = ["macros"] }
+
+# Lambda
+lambda_http = { version = "0.11.1" }
+lambda_runtime = { version = "0.11.1" }
+
+#AWS
+aws-sdk-s3 = "1.23.0"
+aws-config = "1.2.0"
+aws_lambda_events = { version = "0.15.0", default-features = false }

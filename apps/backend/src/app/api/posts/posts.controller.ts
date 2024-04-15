@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Post } from '@nestjs/common'
+import { Controller,  Inject, Post } from '@nestjs/common'
 import { StorageService } from '~/app/storage/storage.service'
 
 @Controller('posts')
