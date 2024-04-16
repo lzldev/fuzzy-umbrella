@@ -1,3 +1,1 @@
-pub fn funny() {
-    ()
-}
+pub mod image_processing;

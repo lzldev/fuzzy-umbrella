@@ -1,28 +1,23 @@
-use std::io::Read;
-
 use aws_config::SdkConfig;
 use aws_lambda_events::event::s3::S3Event;
 use aws_sdk_s3::Client;
-use fn_s3_process::LambdaEnv;
+use fn_s3_process::{EnvTwo, LambdaEnv};
 use lambda_runtime::{
     run, service_fn,
-    tracing::{self, debug, error, info},
+    tracing::{self, error, info},
     Error, LambdaEvent,
 };
-use tokio::{
-    fs,
-    io::{self, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt},
-};
+use tokio::{fs, io};
 
-struct SharedContext {
+struct SharedContext<'a> {
+    env: EnvTwo<'a>,
     config: SdkConfig,
     client: Client,
-    env: LambdaEnv,
 }
 
-impl SharedContext {
+impl<'ctx> SharedContext<'ctx> {
     pub async fn new() -> Self {
-        let env = LambdaEnv::new();
+        let env = EnvTwo::load_env();
         let config = aws_config::load_from_env().await;
         let client = aws_sdk_s3::Client::new(&config);
 
@@ -41,7 +36,7 @@ impl SharedContext {
 /// - https://github.com/aws-samples/serverless-rust-demo/
 async fn function_handler(
     event: LambdaEvent<S3Event>,
-    context: &SharedContext,
+    context: &SharedContext<'static>,
 ) -> Result<(), Error> {
     // Extract some useful information from the request
     let payload = event.payload;
@@ -77,7 +72,9 @@ async fn function_handler(
 
     info!("Object: {:?}", object);
 
+    let adsf = object.body.collect().await.unwrap();
     let mut reader = object.body.into_async_read();
+
     let mut out = fs::File::options()
         .write(true)
         .create(true)
@@ -89,6 +86,8 @@ async fn function_handler(
     io::copy(&mut reader, &mut out)
         .await
         .expect("To Write file");
+
+    let asdf = context.client.put_object().body(input);
 
     Ok(())
 }
