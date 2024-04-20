@@ -1,42 +1,48 @@
+pub mod encode;
+pub mod process;
+
 use std::{
     io::Cursor,
-    ops::{Deref, Div},
     sync::{Arc, RwLock},
 };
 
-use image::{io::Reader as ImageReader, DynamicImage};
+use image::io::Reader as ImageReader;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use tokio::sync::oneshot;
+use tokio::{sync::oneshot, time::Instant};
 
-pub fn load_image() {}
+use self::{encode::EncodingResult, process::ProcessingPlan};
 
-const THUBMNAILS: u32 = 4;
-const TOTAL_SIZE: u32 = 300;
-
-pub async fn process_image_vec(image_vec: Vec<u8>) -> Result<Vec<DynamicImage>, anyhow::Error> {
-    //TODO: treat errors.
+pub async fn process_image_vec(
+    image_vec: Vec<u8>,
+    plan: Vec<ProcessingPlan>,
+) -> Result<Vec<EncodingResult>, anyhow::Error> {
     let img = ImageReader::new(Cursor::new(image_vec))
         .with_guessed_format()?
         .decode()?;
 
     let img = Arc::new(RwLock::new(img));
-    let (tx, rx) = oneshot::channel::<Vec<DynamicImage>>();
+    let (tx, rx) = oneshot::channel::<Vec<EncodingResult>>();
 
     rayon::spawn(move || {
-        let ret = (0..THUBMNAILS)
+        let ret: Vec<EncodingResult> = plan
             .into_par_iter()
-            .map(|idx| {
-                let img = &img.read().unwrap();
-                if idx == 0 {
-                    return img.deref().clone();
-                }
-                img.thumbnail(TOTAL_SIZE.div(idx + 1), TOTAL_SIZE.div(idx + 1))
+            .map(|plan| {
+                let img = &img.read().expect("Image lock is poisoned");
+
+                let t = Instant::now();
+                let processed = plan.process_image(img);
+                eprintln!("Processing {} : {:?}", &processed.name, t.elapsed());
+
+                let t = Instant::now();
+                let encoded = processed.encode();
+                eprintln!("Encoded {} : {:?}", &encoded.name, t.elapsed());
+
+                encoded
             })
             .collect();
 
         tx.send(ret).expect("Couldn't  Send vec into channel");
-        ()
     });
 
-    Ok(rx.await.expect("Couldn't Receive From RAYON."))
+    Ok(rx.await?)
 }
