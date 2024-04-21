@@ -10,6 +10,8 @@ use image::io::Reader as ImageReader;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use tokio::{sync::oneshot, time::Instant};
 
+use crate::image_processing::process::ProcessingResult;
+
 use self::{encode::EncodingResult, process::ProcessingPlan};
 
 pub async fn process_image_vec(
@@ -32,6 +34,12 @@ pub async fn process_image_vec(
                 let t = Instant::now();
                 let processed = plan.process_image(img);
                 eprintln!("Processing {} : {:?}", &processed.name, t.elapsed());
+
+                let processed = ProcessingResult {
+                    //TODO:Refactor this lmao.
+                    image: processed.image.into_rgb8().into(),
+                    ..processed
+                };
 
                 let t = Instant::now();
                 let encoded = processed.encode();
