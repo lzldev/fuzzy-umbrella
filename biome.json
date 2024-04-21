@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "formatter": {
-    "enabled": true,
+    "enabled": false,
     "indentStyle": "space"
   },
   "organizeImports": {

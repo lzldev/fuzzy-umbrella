@@ -8,7 +8,7 @@ use std::{
 
 use image::io::Reader as ImageReader;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use tokio::{sync::oneshot, time::Instant};
+use tokio::sync::oneshot;
 
 use crate::image_processing::process::ProcessingResult;
 

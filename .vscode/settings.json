@@ -3,5 +3,8 @@
   "editor.detectIndentation": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
