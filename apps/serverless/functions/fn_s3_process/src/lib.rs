@@ -17,7 +17,7 @@ where
 {
 }
 
-pub trait LambdaEnv<'a, V, T>
+pub trait EnumMapEnv<'a, V, T>
 where
     T: IntoEnumIterator,
     V: IntoEnumIterator + EnvVar<T>,
@@ -46,14 +46,14 @@ where
 }
 
 #[derive(EnumIter)]
-pub enum LambdaEnVENVEN {
-    OUTPUT_BUCKET,
+pub enum LambdaEnv {
+    OutputBucket,
 }
 
-impl EnvVar<LambdaEnVENVEN> for LambdaEnVENVEN {
+impl EnvVar<LambdaEnv> for LambdaEnv {
     fn var_name(var: &Self) -> &'static str {
         match var {
-            Self::OUTPUT_BUCKET => "OUTPUT_BUCKET",
+            Self::OutputBucket => "OUTPUT_BUCKET",
         }
     }
 }
@@ -62,7 +62,7 @@ pub struct EnvTwo<'env> {
     map: EnvHashMap<'env>,
 }
 
-impl<'env> LambdaEnv<'env, LambdaEnVENVEN, LambdaEnVENVEN> for EnvTwo<'env> {
+impl<'env> EnumMapEnv<'env, LambdaEnv, LambdaEnv> for EnvTwo<'env> {
     fn get_map(&'env self) -> &'env EnvHashMap<'env> {
         &self.map
     }
@@ -75,6 +75,6 @@ impl<'env> LambdaEnv<'env, LambdaEnVENVEN, LambdaEnVENVEN> for EnvTwo<'env> {
 #[test]
 fn make_env() {
     let map = EnvTwo::load_env();
-    map.get(LambdaEnVENVEN::OUTPUT_BUCKET);
-    map.get(LambdaEnVENVEN::OUTPUT_BUCKET);
+    map.get(LambdaEnv::OutputBucket);
+    map.get(LambdaEnv::OutputBucket);
 }

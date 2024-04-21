@@ -31,9 +31,7 @@ pub async fn process_image_vec(
             .map(|plan| {
                 let img = &img.read().expect("Image lock is poisoned");
 
-                let t = Instant::now();
                 let processed = plan.process_image(img);
-                eprintln!("Processing {} : {:?}", &processed.name, t.elapsed());
 
                 let processed = ProcessingResult {
                     //TODO:Refactor this lmao.
@@ -41,9 +39,7 @@ pub async fn process_image_vec(
                     ..processed
                 };
 
-                let t = Instant::now();
                 let encoded = processed.encode();
-                eprintln!("Encoded {} : {:?}", &encoded.name, t.elapsed());
 
                 encoded
             })
