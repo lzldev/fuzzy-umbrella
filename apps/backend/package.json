@@ -18,10 +18,10 @@
     "test:debug": "pnpm with-env node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/pnpm jest --runInBand",
     "test:e2e": "pnpm with-env jest --config ./test/jest-e2e.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "with-env": "dotenv -e ../../.env --",
-    "drizzle:push": "pnpm with-env pnpm drizzle-kit push:sqlite"
+    "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@artspace/db": "workspace:^",
     "@aws-sdk/client-s3": "^3.554.0",
     "@aws-sdk/credential-providers": "^3.554.0",
     "@aws-sdk/hash-node": "^3.374.0",

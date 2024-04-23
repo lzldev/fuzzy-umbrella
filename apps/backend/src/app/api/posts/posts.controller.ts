@@ -4,7 +4,6 @@ import {
   HttpException,
   Inject,
   Post,
-  Req,
   UseGuards,
 } from "@nestjs/common";
 import { StorageService } from "~/app/storage/storage.service";
@@ -15,7 +14,7 @@ import { v1 } from "uuid";
 import { z } from "zod";
 import { Database, DatabaseProvider } from "~/app/database/database.provider";
 import { ClerkUserID } from "../auth/clerk/clerk.decorator";
-import { users } from "~/lib/db/schema";
+import { users } from "@artspace/db";
 import { eq } from "drizzle-orm";
 
 export const newPostSchema = z.object({

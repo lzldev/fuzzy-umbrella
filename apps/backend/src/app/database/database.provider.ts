@@ -1,6 +1,6 @@
 import { type FactoryProvider, Inject, applyDecorators } from "@nestjs/common";
 import { EnvProvider } from "~/app/config/env.provider";
-import { Connection, createConnection } from "~/lib/db/connection";
+import { type Connection, createConnection } from "@artspace/db";
 
 export const DatabaseProviderToken = "DATABASE_PROVIDER";
 export type DatabaseProvider = Connection;
