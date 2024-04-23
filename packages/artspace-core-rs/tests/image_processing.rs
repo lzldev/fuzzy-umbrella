@@ -1,4 +1,4 @@
-use mediathing::image_processing::{
+use artspace_core::image_processing::{
     process::{ProcessingPlan, ProcessingPlanType},
     process_image_vec,
 };

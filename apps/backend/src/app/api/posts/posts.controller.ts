@@ -12,7 +12,6 @@ import { ClerkGuard } from "../auth/clerk/clerk.guard";
 import { RedisClient, RedisClientProvider } from "~/app/redis/redis.provider";
 import { v1 } from "uuid";
 
-import type { PreparedPost } from "artspace-shared/bindings/PreparedPost";
 import { z } from "zod";
 import { Database, DatabaseProvider } from "~/app/database/database.provider";
 import { ClerkSessionID, ClerkUserID } from "../auth/clerk/clerk.decorator";

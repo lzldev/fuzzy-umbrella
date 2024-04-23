@@ -1,5 +1,5 @@
 [package]
-name = "fn_s3_process"
+name = "lambda_http_test"
 version = "0.1.0"
 edition = "2021"
 
@@ -15,20 +15,7 @@ edition = "2021"
 # and it will keep the alphabetic ordering for you.
 
 [dependencies]
-mediathing = { path = "../../mediathing" }
-
-anyhow = { workspace = true }
+serde = "1.0.197"
+serde_json = "1.0.115"
 tokio = { workspace = true }
-rayon = { workspace = true }
-lazy_static = { workspace = true }
-
-strum = { workspace = true }
-
-serde = { workspace = true }
-serde_json = { workspace = true }
-
-# AWS 
-lambda_runtime = { workspace = true }
-aws_lambda_events = { workspace = true, features = ["s3"] }
-aws-sdk-s3 = { workspace = true }
-aws-config = { workspace = true }
+lambda_http = { workspace = true }

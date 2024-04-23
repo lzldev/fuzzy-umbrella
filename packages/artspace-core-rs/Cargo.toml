@@ -1,5 +1,6 @@
 [package]
-name = "mediathing"
+name = "artspace_core"
+description = "Core rust package for Artspace"
 version = "0.1.0"
 edition = "2021"
 

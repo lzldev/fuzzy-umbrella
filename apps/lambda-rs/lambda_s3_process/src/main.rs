@@ -1,15 +1,15 @@
+use artspace_core::image_processing::{
+    process::{ProcessingPlan, ProcessingPlanType},
+    process_image_vec,
+};
 use aws_lambda_events::event::s3::S3Event;
 use aws_sdk_s3::{primitives::ByteStream, Client};
-use fn_s3_process::{EnumMapEnv, EnvTwo, LambdaEnv};
 use lambda_runtime::{
     run, service_fn,
     tracing::{self, error, info},
     Error, LambdaEvent,
 };
-use mediathing::image_processing::{
-    process::{ProcessingPlan, ProcessingPlanType},
-    process_image_vec,
-};
+use lambda_s3_process::{EnumMapEnv, EnvTwo, LambdaEnv};
 use tokio::task::JoinSet;
 
 struct SharedContext<'a> {
