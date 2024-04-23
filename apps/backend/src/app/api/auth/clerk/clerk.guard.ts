@@ -9,11 +9,14 @@ import {
 } from "@nestjs/common";
 import { ClerkClient, ClerkClientProvider } from "./clerk.client";
 import { EnvProvider } from "~/app/config/env.provider";
-import { createLocalJWKSet, jwtVerify } from "jose";
+import { jwtVerify } from "jose";
 import { Reflector } from "@nestjs/core";
 import { IS_PUBLIC_METADATA_KEY } from "../public.decorator";
-import { ClerkJWTPayload } from "./clerk.types";
 import { JWKS, JWKSProvider } from "../jwt/jwks.provider";
+import {
+  REQ_CLERK_SESSION_ID_KEY,
+  REQ_CLERK_USER_ID_KEY,
+} from "./clerk.decorator";
 
 @Injectable()
 export class ClerkGuard implements CanActivate {
@@ -56,8 +59,8 @@ export class ClerkGuard implements CanActivate {
 
     verify.payload.sid;
 
-    req["clerk_session_id"] = verify.payload.sid;
-    req["clerk_user_id"] = verify.payload.sub;
+    req[REQ_CLERK_SESSION_ID_KEY] = verify.payload.sid;
+    req[REQ_CLERK_USER_ID_KEY] = verify.payload.sub;
 
     return true;
   }

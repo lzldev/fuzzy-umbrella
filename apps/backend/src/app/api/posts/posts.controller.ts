@@ -1,6 +1,12 @@
-import { Controller, Inject, Post, UseGuards } from "@nestjs/common";
+import { Controller, Inject, Post, Req, UseGuards } from "@nestjs/common";
 import { StorageService } from "~/app/storage/storage.service";
 import { ClerkGuard } from "../auth/clerk/clerk.guard";
+import {
+  ClerkSession,
+  ClerkSessionParam,
+  ClerkUser,
+  ClerkUserParam,
+} from "../auth/clerk/clerk.decorator";
 
 @Controller("posts")
 @UseGuards(ClerkGuard)
