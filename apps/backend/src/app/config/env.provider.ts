@@ -9,6 +9,7 @@ const requiredFields = {
   TURSO_AUTH_TOKEN: "turso_auth_token",
   CLERK_PUBLISHABLE_KEY: "clerk_publishable_key",
   CLERK_SECRET_KEY: "clerk_secret_key",
+  CLERK_JWKS_URL: "clerk_jwks_url",
 } as const satisfies Record<string, keyof EnvProvider>;
 
 const optionalFields = {
@@ -34,6 +35,7 @@ export class EnvProvider {
   public readonly turso_connection_url: string;
   public readonly turso_auth_token: string;
   public readonly clerk_publishable_key: string;
+  public readonly clerk_jwks_url: string;
   public readonly clerk_secret_key: string;
   public readonly cors_frontend_origin: string;
 

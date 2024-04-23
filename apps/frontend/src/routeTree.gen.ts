@@ -10,64 +10,64 @@
 
 // Import Routes
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as TestImport } from "./routes/test";
-import { Route as FunnyImport } from "./routes/funny";
-import { Route as AuthImport } from "./routes/_auth";
-import { Route as IndexImport } from "./routes/index";
-import { Route as AuthProfileImport } from "./routes/_auth/profile";
+import { Route as rootRoute } from './routes/__root'
+import { Route as TestImport } from './routes/test'
+import { Route as FunnyImport } from './routes/funny'
+import { Route as AuthImport } from './routes/_auth'
+import { Route as IndexImport } from './routes/index'
+import { Route as AuthProfileImport } from './routes/_auth/profile'
 
 // Create/Update Routes
 
 const TestRoute = TestImport.update({
-  path: "/test",
+  path: '/test',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const FunnyRoute = FunnyImport.update({
-  path: "/funny",
+  path: '/funny',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const AuthRoute = AuthImport.update({
-  id: "/_auth",
+  id: '/_auth',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const IndexRoute = IndexImport.update({
-  path: "/",
+  path: '/',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const AuthProfileRoute = AuthProfileImport.update({
-  path: "/profile",
+  path: '/profile',
   getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 
 // Populate the FileRoutesByPath interface
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      preLoaderRoute: typeof IndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/_auth": {
-      preLoaderRoute: typeof AuthImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/funny": {
-      preLoaderRoute: typeof FunnyImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/test": {
-      preLoaderRoute: typeof TestImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/_auth/profile": {
-      preLoaderRoute: typeof AuthProfileImport;
-      parentRoute: typeof AuthImport;
-    };
+    '/': {
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/_auth': {
+      preLoaderRoute: typeof AuthImport
+      parentRoute: typeof rootRoute
+    }
+    '/funny': {
+      preLoaderRoute: typeof FunnyImport
+      parentRoute: typeof rootRoute
+    }
+    '/test': {
+      preLoaderRoute: typeof TestImport
+      parentRoute: typeof rootRoute
+    }
+    '/_auth/profile': {
+      preLoaderRoute: typeof AuthProfileImport
+      parentRoute: typeof AuthImport
+    }
   }
 }
 
@@ -78,6 +78,6 @@ export const routeTree = rootRoute.addChildren([
   AuthRoute.addChildren([AuthProfileRoute]),
   FunnyRoute,
   TestRoute,
-]);
+])
 
 /* prettier-ignore-end */

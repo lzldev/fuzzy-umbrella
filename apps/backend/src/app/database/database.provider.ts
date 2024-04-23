@@ -11,7 +11,7 @@ export const DatabaseProviderFactory: FactoryProvider<DatabaseProvider> = {
   useFactory: (config: EnvProvider) => {
     return createConnection(
       config.turso_connection_url,
-      config.turso_auth_token,
+      config.turso_auth_token
     );
   },
 };

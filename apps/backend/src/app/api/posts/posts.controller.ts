@@ -1,7 +1,9 @@
-import { Controller, Inject, Post } from "@nestjs/common";
+import { Controller, Inject, Post, UseGuards } from "@nestjs/common";
 import { StorageService } from "~/app/storage/storage.service";
+import { ClerkGuard } from "../auth/clerk/clerk.guard";
 
 @Controller("posts")
+@UseGuards(ClerkGuard)
 export class PostsController {
   @Inject()
   private readonly storage: StorageService;

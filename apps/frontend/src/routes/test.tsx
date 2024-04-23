@@ -16,8 +16,12 @@ function FileUploadForm() {
               method: "POST",
               credentials: "include",
             });
+
+            console.log(req);
           }}
-        />
+        >
+          Test
+        </button>
       </div>
     </FlexContainer>
   );
