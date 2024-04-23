@@ -1,0 +1,17 @@
+{
+  "name": "artspace-schema",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "tsup": "^8.0.2"
+  },
+  "dependencies": {
+    "zod": "^3.22.4"
+  }
+}

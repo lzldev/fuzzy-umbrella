@@ -14,7 +14,7 @@ import { v1 } from "uuid";
 
 import { z } from "zod";
 import { Database, DatabaseProvider } from "~/app/database/database.provider";
-import { ClerkSessionID, ClerkUserID } from "../auth/clerk/clerk.decorator";
+import { ClerkUserID } from "../auth/clerk/clerk.decorator";
 import { users } from "~/lib/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -59,7 +59,7 @@ export class PostsController {
 
     const uuid = v1();
 
-    const post: PreparedPost = {
+    const post = {
       id: uuid,
       content: data.content,
       userId: user.clerk_id,
