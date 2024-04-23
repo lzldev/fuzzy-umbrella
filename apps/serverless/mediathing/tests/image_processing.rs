@@ -18,10 +18,12 @@ pub async fn test_image_processing_parallel() -> Result<(), anyhow::Error> {
     let mut open = fs::File::open(TEST_INPUT_FILE_DIR)
         .await
         .expect("Couldn't open test file.");
+
     let mut vec: Vec<u8> = Vec::new();
     open.read_to_end(&mut vec).await?;
 
     let name = "content";
+
     let plan = vec![
         ProcessingPlan {
             name: format!("{name}_optimized.webp"),

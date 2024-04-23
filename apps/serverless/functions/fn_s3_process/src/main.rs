@@ -1,4 +1,3 @@
-use aws_config::SdkConfig;
 use aws_lambda_events::event::s3::S3Event;
 use aws_sdk_s3::{primitives::ByteStream, Client};
 use fn_s3_process::{EnumMapEnv, EnvTwo, LambdaEnv};
@@ -15,20 +14,16 @@ use tokio::task::JoinSet;
 
 struct SharedContext<'a> {
     env: EnvTwo<'a>,
-    config: SdkConfig,
     client: Client,
 }
 
 impl<'ctx> SharedContext<'ctx> {
     pub async fn new() -> Self {
-        let env = EnvTwo::load_env();
         let config = aws_config::load_from_env().await;
-        let client = aws_sdk_s3::Client::new(&config);
 
         Self {
-            env,
-            config,
-            client,
+            env: EnvTwo::load_env(),
+            client: aws_sdk_s3::Client::new(&config),
         }
     }
 }
@@ -42,7 +37,13 @@ async fn main() -> Result<(), Error> {
     let context_ref = &context;
 
     run(service_fn(move |event| async move {
-        function_handler(event, context_ref).await
+        let handler = function_handler(event, context_ref).await;
+
+        if let Err(e) = &handler {
+            error!(e);
+        }
+
+        handler
     }))
     .await
 }
@@ -66,8 +67,10 @@ async fn function_handler<'a>(
         }
     };
 
-    if Some(String::from("ObjectCreated:Post")) != record.event_name {
-        return Err("Event not supported".into());
+    if let Some(e) = &record.event_name {
+        if !e.starts_with("ObjectCreated") {
+            return Err("Event not supported".into());
+        }
     }
 
     let bucket_name = record.s3.bucket.name.clone().unwrap();

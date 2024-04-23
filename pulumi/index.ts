@@ -1,7 +1,10 @@
 import * as aws from "@pulumi/aws";
-import { Principals } from "@pulumi/aws/iam";
+import * as archive from "@pulumi/archive";
+import { ManagedPolicies, ManagedPolicy, Principals } from "@pulumi/aws/iam";
+import { Runtime } from "@pulumi/aws/lambda";
 import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
+import { Archive } from "@pulumi/pulumi/asset";
 
 const AWS_Managed_CachingOptimized_CACHE_POLICY_ID =
   "658327ea-f89d-4fab-a63d-7e88639e58f6";
@@ -41,6 +44,55 @@ const contentBucket = new aws.s3.Bucket(
     ],
   }
 );
+
+const assumeRole = aws.iam.getPolicyDocument({
+  statements: [
+    {
+      effect: "Allow",
+      principals: [
+        {
+          type: "Service",
+          identifiers: ["lambda.amazonaws.com"],
+        },
+      ],
+      actions: ["sts:AssumeRole"],
+    },
+  ],
+});
+
+const iamForLambda = new aws.iam.Role("iam_for_lambda", {
+  name: "iam_for_lambda",
+  assumeRolePolicy: assumeRole.then((assumeRole) => assumeRole.json),
+});
+
+new aws.iam.RolePolicyAttachment("lambda_role_execute_attach", {
+  role: iamForLambda,
+  policyArn: ManagedPolicy.AWSLambdaExecute,
+});
+
+const processPostHandlerName = "process-post-handler";
+
+const processPostHandler = new aws.lambda.Function(processPostHandlerName, {
+  name: processPostHandlerName,
+  code: new pulumi.asset.FileArchive("fns3process.zip"),
+  handler: "rust.handler",
+  role: iamForLambda.arn,
+  runtime: Runtime.CustomAL2023,
+  environment: {
+    variables: pulumi.all([contentBucket.bucket]).apply(([contentBucket]) => ({
+      OUTPUT_BUCKET: contentBucket,
+    })),
+  },
+});
+
+//TODO: This should't be required if the stack is destroyed
+const processPostLogGroup = new aws.cloudwatch.LogGroup("example", {
+  name: `/aws/lambda/${processPostHandlerName}`,
+  retentionInDays: 1,
+});
+
+postsBucket.onObjectCreated(processPostHandlerName, processPostHandler);
+
 const cloudFrontDistribution = new aws.cloudfront.Distribution(
   "artspace-content",
   {
