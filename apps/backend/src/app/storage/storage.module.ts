@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import { StorageProviderFactory } from "./storage.provider";
 import { StorageService } from "./storage.service";
 

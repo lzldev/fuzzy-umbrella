@@ -1,21 +1,84 @@
-import { Controller, Inject, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpException,
+  Inject,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { StorageService } from "~/app/storage/storage.service";
 import { ClerkGuard } from "../auth/clerk/clerk.guard";
-import {
-  ClerkSession,
-  ClerkSessionParam,
-  ClerkUser,
-  ClerkUserParam,
-} from "../auth/clerk/clerk.decorator";
+import { RedisClient, RedisClientProvider } from "~/app/redis/redis.provider";
+import { v1 } from "uuid";
+
+import type { PreparedPost } from "artspace-shared/bindings/PreparedPost";
+import { z } from "zod";
+import { Database, DatabaseProvider } from "~/app/database/database.provider";
+import { ClerkSessionID, ClerkUserID } from "../auth/clerk/clerk.decorator";
+import { users } from "~/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+export const newPostSchema = z.object({
+  content: z.string().min(0).max(150),
+  fileSize: z.number({ coerce: true }),
+});
 
 @Controller("posts")
 @UseGuards(ClerkGuard)
 export class PostsController {
+  @Database()
+  private readonly database: DatabaseProvider;
+
   @Inject()
   private readonly storage: StorageService;
+
+  @RedisClient()
+  private readonly redis: RedisClientProvider;
+
   @Post("create")
-  sendPost() {
-    return this.storage.presignedPost("mediathing-posts-57edd0f", "object.png");
+  async sendPost(@ClerkUserID() userId: string, @Body() body: any) {
+    console.info("[create.body]", body);
+
+    const data = newPostSchema.parse(body);
+
+    const query = await this.database
+      .select({
+        id: users.id,
+        clerk_id: users.clerk_id,
+      })
+      .from(users)
+      .where(eq(users.clerk_id, userId))
+      .limit(1)
+      .execute();
+
+    const user = query.at(0);
+
+    if (!user) {
+      throw new HttpException("User not found in database", 500);
+    }
+
+    const uuid = v1();
+
+    const post: PreparedPost = {
+      id: uuid,
+      content: data.content,
+      userId: user.clerk_id,
+    };
+
+    const fileName = uuid;
+
+    const presignedPost = await this.storage.presignedPost(
+      "mediathing-posts-57edd0f", //TODO: GET THIS VALUE FROM ENV.
+      fileName,
+      {
+        expected_file_size: data.fileSize,
+      }
+    );
+
+    void this.redis.hset(`post:${uuid}`, post);
+
+    return { fileName, presignedPost };
   }
 
   @Post("test")
