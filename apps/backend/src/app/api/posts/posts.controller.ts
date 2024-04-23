@@ -1,12 +1,17 @@
-import { Controller,  Inject, Post } from '@nestjs/common'
-import { StorageService } from '~/app/storage/storage.service'
+import { Controller, Inject, Post } from "@nestjs/common";
+import { StorageService } from "~/app/storage/storage.service";
 
-@Controller('posts')
+@Controller("posts")
 export class PostsController {
   @Inject()
-  private readonly storage: StorageService
-  @Post('create')
+  private readonly storage: StorageService;
+  @Post("create")
   sendPost() {
-    return this.storage.presignedPost('mediathing-posts-57edd0f', 'object.png')
+    return this.storage.presignedPost("mediathing-posts-57edd0f", "object.png");
+  }
+
+  @Post("test")
+  testAuth() {
+    return { data: "ok" };
   }
 }

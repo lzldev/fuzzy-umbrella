@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Storage } from './storage';
+import { Test, TestingModule } from "@nestjs/testing";
+import { Storage } from "./storage";
 
-describe('Storage', () => {
+describe("Storage", () => {
   let provider: Storage;
 
   beforeEach(async () => {
@@ -12,7 +12,7 @@ describe('Storage', () => {
     provider = module.get<Storage>(Storage);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(provider).toBeDefined();
   });
 });

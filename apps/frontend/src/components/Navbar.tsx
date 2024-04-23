@@ -3,8 +3,8 @@ import {
   SignedIn,
   SignedOut,
   UserButton,
-} from '@clerk/clerk-react'
-import { Link } from '@tanstack/react-router'
+} from "@clerk/clerk-react";
+import { Link } from "@tanstack/react-router";
 
 export function Navbar() {
   return (
@@ -21,7 +21,7 @@ export function Navbar() {
         <Profile />
       </div>
     </div>
-  )
+  );
 }
 
 function Profile() {
@@ -40,5 +40,5 @@ function Profile() {
         </UserButton>
       </SignedIn>
     </>
-  )
+  );
 }

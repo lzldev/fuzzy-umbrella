@@ -1,5 +1,5 @@
-import { Global, Module } from '@nestjs/common'
-import { EnvProvider } from './env.provider'
+import { Global, Module } from "@nestjs/common";
+import { EnvProvider } from "./env.provider";
 
 @Global()
 @Module({

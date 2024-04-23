@@ -1,15 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import reactLogo from '~/assets/react.svg'
-import { FlexContainer } from '~/components/FlexContainer'
-import viteLogo from '/vite.svg'
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import reactLogo from "~/assets/react.svg";
+import { FlexContainer } from "~/components/FlexContainer";
+import viteLogo from "/vite.svg";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: Index,
-})
+});
 
 function Index() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
   return (
     <FlexContainer>
       <div className="gap-8 flex flex-col items-center">
@@ -39,5 +39,5 @@ function Index() {
         </p>
       </div>
     </FlexContainer>
-  )
+  );
 }

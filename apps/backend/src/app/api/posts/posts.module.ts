@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common'
-import { StorageModule } from '~/app/storage/storage.module'
-import { PostsController } from './posts.controller'
+import { Module } from "@nestjs/common";
+import { StorageModule } from "~/app/storage/storage.module";
+import { PostsController } from "./posts.controller";
 
 @Module({
   imports: [StorageModule],

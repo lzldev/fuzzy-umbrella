@@ -1,15 +1,15 @@
-import { Module } from '@nestjs/common'
-import { RouterModule } from '@nestjs/core'
-import { PingModule } from '~/app/api/ping/ping.module'
-import { PostsModule } from '~/app/api/posts/posts.module'
+import { Module } from "@nestjs/common";
+import { RouterModule } from "@nestjs/core";
+import { PingModule } from "~/app/api/ping/ping.module";
+import { PostsModule } from "~/app/api/posts/posts.module";
 
 @Module({
   imports: [
     PingModule,
     PostsModule,
     RouterModule.register([
-      { path: 'api', module: PingModule },
-      { path: 'api', module: PostsModule },
+      { path: "api", module: PingModule },
+      { path: "api", module: PostsModule },
     ]),
   ],
 })

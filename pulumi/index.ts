@@ -42,7 +42,7 @@ const contentBucket = new aws.s3.Bucket(
     aliases: [
       "urn:pulumi:dev::mediathing::aws:s3/bucket:Bucket::mediathing-content",
     ],
-  }
+  },
 );
 
 const assumeRole = aws.iam.getPolicyDocument({
@@ -121,7 +121,7 @@ const cloudFrontDistribution = new aws.cloudfront.Distribution(
         locations: [],
       },
     },
-  }
+  },
 );
 
 const allowReadFromOAC = aws.iam.getPolicyDocumentOutput({
@@ -155,7 +155,7 @@ const contentBucketOACPolicy = new aws.s3.BucketPolicy(
   {
     bucket: contentBucket.bucket,
     policy: allowReadFromOAC.json,
-  }
+  },
 );
 
 export const posts_bucket_name = postsBucket.id;
