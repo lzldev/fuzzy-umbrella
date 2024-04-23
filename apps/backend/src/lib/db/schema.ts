@@ -13,15 +13,21 @@ export const users = sqliteTable("users", {
 });
 
 export const posts = sqliteTable("posts", {
-  id: integer("id").primaryKey(),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  id: text("id", {
+    mode: "text",
+  })
+    .unique()
+    .primaryKey(),
+  content: text("content", {
+    length: 150,
+  }).notNull(),
+  imageKey: text("image_key").notNull(),
   createdAt: text("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 });
 
 export type InsertUser = typeof users.$inferInsert;

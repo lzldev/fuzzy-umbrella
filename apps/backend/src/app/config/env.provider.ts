@@ -10,6 +10,9 @@ const requiredFields = {
   CLERK_PUBLISHABLE_KEY: "clerk_publishable_key",
   CLERK_SECRET_KEY: "clerk_secret_key",
   CLERK_JWKS_URL: "clerk_jwks_url",
+
+  AWS_ELASTICACHE_REDIS_CLUSTER_ENDPOINT_URL:
+    "aws_elasticache_redis_cluster_endpoint_url",
 } as const satisfies Record<string, keyof EnvProvider>;
 
 const optionalFields = {
@@ -31,6 +34,7 @@ export class EnvProvider {
   public readonly aws_region: string;
   public readonly aws_access_key_id: string;
   public readonly aws_secret_access_key: string;
+  public readonly aws_elasticache_redis_cluster_endpoint_url: string;
 
   public readonly turso_connection_url: string;
   public readonly turso_auth_token: string;

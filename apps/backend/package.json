@@ -18,7 +18,8 @@
     "test:debug": "pnpm with-env node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/pnpm jest --runInBand",
     "test:e2e": "pnpm with-env jest --config ./test/jest-e2e.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e ../../.env --",
+    "drizzle:push": "pnpm with-env pnpm drizzle-kit push:sqlite"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.554.0",
@@ -36,6 +37,7 @@
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.6",
     "drizzle-orm": "^0.30.8",
+    "ioredis": "^5.4.1",
     "jose": "^5.2.4",
     "ofetch": "^1.3.4",
     "reflect-metadata": "^0.2.0",
@@ -43,6 +45,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "artspace-shared": "workspace:^",
     "@clerk/types": "^4.0.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",

@@ -1,0 +1,13 @@
+{
+  "name": "artspace-shared",
+  "type": "module",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Shared type definitions for Artspace",
+  "exports": {
+    "./Post": "./bindings/Post.ts",
+    "./*": {
+      "default": "./bindings/*.ts"
+    }
+  }
+}
