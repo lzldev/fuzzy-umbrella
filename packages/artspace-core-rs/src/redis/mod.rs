@@ -1,5 +1,7 @@
 mod artspace_redis_commands;
+
 pub mod hash_map;
+pub mod keys;
 pub use artspace_redis_commands::*;
 
 use redis::{aio::MultiplexedConnection, AsyncCommands, RedisError, ToRedisArgs};

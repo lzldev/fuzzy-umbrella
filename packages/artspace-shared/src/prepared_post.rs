@@ -3,7 +3,7 @@ use structmap::{FromMap, ToMap};
 use structmap_derive::{FromMap, ToMap};
 use ts_rs::TS;
 
-#[derive(Default, Serialize, Deserialize, TS, ToMap, FromMap)]
+#[derive(Default, Debug, Serialize, Deserialize, TS, ToMap, FromMap)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct PreparedPost {

@@ -21,3 +21,6 @@ redis = { workspace = true, features = ["tokio-comp"] }
 
 structmap = { workspace = true }
 structmap-derive = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ['full', 'test-util'] }

@@ -15,10 +15,12 @@ strum = { version = "0.26.2", features = ["derive"] }
 structmap = { version = "0.1.6" }
 structmap-derive = { version = "0.1.6" }
 
+#DB
+libsql = { version = "0.3.3", default-features = false, features = ["remote"] }
+
 #Async
 tokio = { version = "1", features = ["macros"] }
 rayon = { version = "1.10.0" }
-async-trait = { version = "0.1.80" }
 
 #Serde
 serde = { version = "1.0.197", features = ["serde_derive"] }

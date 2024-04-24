@@ -29,7 +29,10 @@ strum = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# AWS 
+#TURSO
+libsql = { workspace = true }
+
+#AWS 
 lambda_runtime = { workspace = true }
 aws_lambda_events = { workspace = true, features = ["s3"] }
 aws-sdk-s3 = { workspace = true }

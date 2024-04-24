@@ -1,55 +1,32 @@
+use anyhow::anyhow;
 use artspace_core::{
     image_processing::{
         process::{ProcessingPlan, ProcessingPlanType},
         process_image_vec,
     },
-    redis::ArtsSpaceRedisCommands,
+    redis::{keys::prepared_post_key, ArtsSpaceRedisCommands},
 };
 
+use artspace_shared::PreparedPost;
 use aws_lambda_events::event::s3::S3Event;
-use aws_sdk_s3::{primitives::ByteStream, Client as S3Client};
+use aws_sdk_s3::primitives::ByteStream;
 use lambda_runtime::{
     run, service_fn,
-    tracing::{self, error, info},
+    tracing::{self, debug, error, info},
     Error, LambdaEvent,
 };
 
 use lambda_s3_process::{
-    env::{EnumMapEnv, EnvTwo, LambdaEnv},
+    env::{EnumMapEnv, LambdaEnv},
     utils::parse_object_key,
+    SharedContext,
 };
-use redis::{AsyncCommands, Client as RedisClient};
+
 use tokio::task::JoinSet;
-
-struct SharedContext<'a> {
-    env: EnvTwo<'a>,
-    s3_client: S3Client,
-    redis_client: RedisClient,
-}
-
-impl<'ctx> SharedContext<'ctx> {
-    pub async fn new() -> Self {
-        let aws_config = aws_config::load_from_env().await;
-        let env = EnvTwo::load_env();
-
-        let redis_host = env.get(LambdaEnv::RedisHost).as_str();
-
-        let redis_client =
-            RedisClient::open(redis_host).expect("Couldn't open connection to redis.");
-
-        info!("Connected to redis on : {redis_host}");
-
-        Self {
-            env,
-            redis_client,
-            s3_client: S3Client::new(&aws_config),
-        }
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing::init_default_subscriber();
+
     let context = SharedContext::new().await;
     info!("Lambda Runtime STARTING");
 
@@ -59,7 +36,7 @@ async fn main() -> Result<(), Error> {
         let handler = function_handler(event, context_ref).await;
 
         if let Err(e) = &handler {
-            error!(e);
+            error!("{e:?}");
         }
 
         handler
@@ -75,22 +52,22 @@ async fn main() -> Result<(), Error> {
 async fn function_handler<'a>(
     event: LambdaEvent<S3Event>,
     context: &'a SharedContext<'a>,
-) -> Result<(), Error> {
+) -> Result<(), anyhow::Error> {
     // Extract some useful information from the request
     let payload = event.payload;
 
-    info!("EVENT \n{payload:?}");
+    info!("EVENT [{payload:?}]");
 
     let record = match payload.records.first() {
         Some(r) => r,
         None => {
-            return Err("Event without a record".into());
+            return Err(anyhow!("Event without a record"));
         }
     };
 
     if let Some(e) = &record.event_name {
         if !e.starts_with("ObjectCreated") {
-            return Err("Event not supported".into());
+            return Err(anyhow!("Event not supported"));
         }
     }
 
@@ -105,14 +82,14 @@ async fn function_handler<'a>(
         .send()
         .await
     {
+        Ok(object) => object,
         Err(e) => {
             error!("[GETObjectError] {:?}", e);
-            return Err("Couldn't get Object".into());
+            return Err(anyhow!("Couldn't get Object"));
         }
-        Ok(object) => object,
     };
 
-    info!("Object: \n{:?}", object);
+    debug!("Object[{object:?}]");
 
     let body: Vec<u8> = object
         .body
@@ -123,8 +100,10 @@ async fn function_handler<'a>(
         .into();
 
     let object_key = parse_object_key(&object_key);
+    debug!("object_key[{object_key}]");
 
-    let plan = get_plan(object_key);
+    let plan = get_plan(object_key.as_str());
+    debug!("Processing Plan [{plan:?}]");
 
     let output = process_image_vec(body, plan)
         .await
@@ -177,11 +156,40 @@ async fn function_handler<'a>(
         }
     }
 
+    let post = {
+        let mut redis = context
+            .redis_client
+            .get_multiplexed_async_connection()
+            .await?;
+
+        let key = prepared_post_key(&object_key.as_str());
+        debug!("{key:?}");
+
+        if !redis.hmap_exists(&key).await? {
+            return Err(anyhow!("PreparedPost not found in Redis."));
+        };
+
+        let post = redis.hmap_get::<_, PreparedPost>(&key).await?;
+
+        if post.id.as_str() == "" {
+            return Err(anyhow!("PreparedPost has no ID."));
+        }
+
+        tokio::spawn(async move {
+            match redis.hmap_clear(&key).await {
+                Ok(r) => info!("Redis Cleanup {r:?} keys deleted"),
+                Err(e) => error!("Redis Clenup Error {e:?}"),
+            };
+        });
+
+        post
+    };
+
     Ok(())
 }
 
 //TODO: Make this a json configuration. imported from .... .somehwere.....
-pub fn get_plan(object_key: String) -> Vec<ProcessingPlan> {
+pub fn get_plan(object_key: &str) -> Vec<ProcessingPlan> {
     vec![
         ProcessingPlan {
             name: format!("{object_key}_optimized.webp"),
