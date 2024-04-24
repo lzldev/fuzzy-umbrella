@@ -1,29 +1,48 @@
-use artspace_core::image_processing::{
-    process::{ProcessingPlan, ProcessingPlanType},
-    process_image_vec,
+use artspace_core::{
+    image_processing::{
+        process::{ProcessingPlan, ProcessingPlanType},
+        process_image_vec,
+    },
+    redis::ArtsSpaceRedisCommands,
 };
+
 use aws_lambda_events::event::s3::S3Event;
-use aws_sdk_s3::{primitives::ByteStream, Client};
+use aws_sdk_s3::{primitives::ByteStream, Client as S3Client};
 use lambda_runtime::{
     run, service_fn,
     tracing::{self, error, info},
     Error, LambdaEvent,
 };
-use lambda_s3_process::{EnumMapEnv, EnvTwo, LambdaEnv};
+
+use lambda_s3_process::{
+    env::{EnumMapEnv, EnvTwo, LambdaEnv},
+    utils::parse_object_key,
+};
+use redis::{AsyncCommands, Client as RedisClient};
 use tokio::task::JoinSet;
 
 struct SharedContext<'a> {
     env: EnvTwo<'a>,
-    client: Client,
+    s3_client: S3Client,
+    redis_client: RedisClient,
 }
 
 impl<'ctx> SharedContext<'ctx> {
     pub async fn new() -> Self {
-        let config = aws_config::load_from_env().await;
+        let aws_config = aws_config::load_from_env().await;
+        let env = EnvTwo::load_env();
+
+        let redis_host = env.get(LambdaEnv::RedisHost).as_str();
+
+        let redis_client =
+            RedisClient::open(redis_host).expect("Couldn't open connection to redis.");
+
+        info!("Connected to redis on : {redis_host}");
 
         Self {
-            env: EnvTwo::load_env(),
-            client: aws_sdk_s3::Client::new(&config),
+            env,
+            redis_client,
+            s3_client: S3Client::new(&aws_config),
         }
     }
 }
@@ -32,7 +51,7 @@ impl<'ctx> SharedContext<'ctx> {
 async fn main() -> Result<(), Error> {
     tracing::init_default_subscriber();
     let context = SharedContext::new().await;
-    info!("Lambda Runtime Starting");
+    info!("Lambda Runtime STARTING");
 
     let context_ref = &context;
 
@@ -60,6 +79,8 @@ async fn function_handler<'a>(
     // Extract some useful information from the request
     let payload = event.payload;
 
+    info!("EVENT \n{payload:?}");
+
     let record = match payload.records.first() {
         Some(r) => r,
         None => {
@@ -77,7 +98,7 @@ async fn function_handler<'a>(
     let object_key = record.s3.object.key.clone().unwrap();
 
     let object = match context
-        .client
+        .s3_client
         .get_object()
         .bucket(bucket_name)
         .key(object_key.clone())
@@ -101,11 +122,7 @@ async fn function_handler<'a>(
         .into_bytes()
         .into();
 
-    let object_key = object_key
-        .split(".")
-        .nth(0)
-        .expect("Couldn't Get Object name")
-        .to_owned();
+    let object_key = parse_object_key(&object_key);
 
     let plan = get_plan(object_key);
 
@@ -119,7 +136,7 @@ async fn function_handler<'a>(
         .into_iter()
         .map(|thumb| {
             let output_bucket = output_bucket.clone();
-            let obj = context.client.put_object();
+            let obj = context.s3_client.put_object();
 
             async move {
                 let output_bucket = output_bucket.clone();

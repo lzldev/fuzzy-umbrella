@@ -11,16 +11,11 @@ import { ClerkGuard } from "../auth/clerk/clerk.guard";
 import { RedisClient, RedisClientProvider } from "~/app/redis/redis.provider";
 import { v1 } from "uuid";
 
-import { z } from "zod";
 import { Database, DatabaseProvider } from "~/app/database/database.provider";
 import { ClerkUserID } from "../auth/clerk/clerk.decorator";
 import { users } from "@artspace/db";
 import { eq } from "drizzle-orm";
-
-export const newPostSchema = z.object({
-  content: z.string().min(0).max(150),
-  fileSize: z.number({ coerce: true }),
-});
+import { NewPostSchema } from "artspace-schema";
 
 @Controller("posts")
 @UseGuards(ClerkGuard)
@@ -38,7 +33,7 @@ export class PostsController {
   async sendPost(@ClerkUserID() userId: string, @Body() body: any) {
     console.info("[create.body]", body);
 
-    const data = newPostSchema.parse(body);
+    const data = NewPostSchema.parse(body);
 
     const query = await this.database
       .select({

@@ -10,11 +10,14 @@ edition = "2021"
 serde = { workspace = true }
 serde_json = { workspace = true }
 
+artspace_shared = { path = "../artspace-shared" }
+
 #fn_s3_proc
 image = { workspace = true }
 rayon = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
+redis = { workspace = true, features = ["tokio-comp"] }
 
-[dev-dependencies]
-tokio = { workspace = true, features = ['full', 'test-util'] }
+structmap = { workspace = true }
+structmap-derive = { workspace = true }

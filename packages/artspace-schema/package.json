@@ -2,7 +2,7 @@
   "name": "artspace-schema",
   "version": "1.0.0",
   "main": "./dist/index.js",
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup"

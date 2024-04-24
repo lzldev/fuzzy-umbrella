@@ -1,5 +1,5 @@
 [package]
-name = "artspace-shared"
+name = "artspace_shared"
 description = "Shared type definitions for Artspace"
 version = "0.1.0"
 edition = "2021"
@@ -7,6 +7,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { workspace = true, features = ["serde_derive"] }
+serde = { workspace = true }
 serde_json = { workspace = true }
+structmap = { workspace = true }
+structmap-derive = { workspace = true }
+redis-macros = { workspace = true }
+
 ts-rs = { version = "8.1.0", features = ["serde-compat"] }

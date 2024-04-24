@@ -1,0 +1,2 @@
+[env]
+OUTPUT_BUCKET = "TEST_"

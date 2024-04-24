@@ -4,9 +4,17 @@
   "private": true,
   "version": "1.0.0",
   "description": "Shared type definitions for Artspace",
+  "main": "./dist/index.js",
+  "types": "./bindings/index.ts",
+  "scripts": {
+    "dev": "tsup --watch"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.2"
+  },
   "exports": {
     "./Post": "./bindings/Post.ts",
-    "./*": {
+    ".": {
       "default": "./bindings/*.ts"
     }
   }

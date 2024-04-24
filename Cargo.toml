@@ -12,6 +12,8 @@ anyhow = { version = "1.0.82" }
 lazy_static = { version = "1.4.0" }
 strum = { version = "0.26.2", features = ["derive"] }
 
+structmap = { version = "0.1.6" }
+structmap-derive = { version = "0.1.6" }
 
 #Async
 tokio = { version = "1", features = ["macros"] }
@@ -19,7 +21,7 @@ rayon = { version = "1.10.0" }
 async-trait = { version = "0.1.80" }
 
 #Serde
-serde = { version = "1.0.197" }
+serde = { version = "1.0.197", features = ["serde_derive"] }
 serde_json = { version = "1.0.115" }
 
 # Lambda
@@ -33,3 +35,6 @@ aws_lambda_events = { version = "0.15.0", default-features = false }
 
 #fn_s3_proc
 image = { version = "0.25.1" }
+
+redis = { version = "0.25.3", features = ["tokio-comp"] }
+redis-macros = { version = "0.3.0" }

@@ -14,8 +14,10 @@ edition = "2021"
 # add the latest version of a dependency to the list,
 # and it will keep the alphabetic ordering for you.
 
+
 [dependencies]
 artspace_core = { path = "../../../packages/artspace-core-rs" }
+artspace_shared = { path = "../../../packages/artspace-shared" }
 
 anyhow = { workspace = true }
 tokio = { workspace = true }
@@ -32,3 +34,9 @@ lambda_runtime = { workspace = true }
 aws_lambda_events = { workspace = true, features = ["s3"] }
 aws-sdk-s3 = { workspace = true }
 aws-config = { workspace = true }
+
+redis = { workspace = true, features = ["tokio-comp"] }
+redis-macros = { workspace = true }
+
+# [dev-dependencies]
+# tokio = { workspace = true, features = ['full', 'test-util'] }
