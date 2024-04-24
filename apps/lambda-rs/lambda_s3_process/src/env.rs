@@ -3,7 +3,7 @@ use std::env;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
 
-pub trait EnvVar<T> {
+pub trait EnvVar {
     fn var_name(var: &Self) -> &'static str;
     fn get_var_name(&self) -> &'static str {
         Self::var_name(self)
@@ -11,7 +11,7 @@ pub trait EnvVar<T> {
 }
 
 pub type EnvHashMap<'a> = HashMap<&'a str, String>;
-pub trait HashMapInternal<V>: EnvVar<V>
+pub trait HashMapInternal<V>: EnvVar
 where
     V: IntoEnumIterator,
 {
@@ -20,7 +20,7 @@ where
 pub trait EnumMapEnv<'a, V, T>
 where
     T: IntoEnumIterator,
-    V: IntoEnumIterator + EnvVar<T>,
+    V: IntoEnumIterator + EnvVar,
 {
     fn get_map(&'a self) -> &'a EnvHashMap<'a>;
     fn return_map(map: EnvHashMap<'a>) -> Self;
@@ -49,13 +49,19 @@ where
 pub enum LambdaEnv {
     OutputBucket,
     RedisHost,
+    TursoURL,
+    TursoToken,
 }
 
-impl EnvVar<LambdaEnv> for LambdaEnv {
+// let env_vars = vec!["TURSO_CONNECTION_URL", "TURSO_AUTH_TOKEN", "WEBHOOK_SECRET"];
+
+impl EnvVar for LambdaEnv {
     fn var_name(var: &Self) -> &'static str {
         match var {
             Self::OutputBucket => "OUTPUT_BUCKET",
             Self::RedisHost => "REDIS_HOST",
+            Self::TursoURL => "TURSO_URL",
+            Self::TursoToken => "TURSO_TOKEN",
         }
     }
 }

@@ -185,6 +185,17 @@ async fn function_handler<'a>(
         post
     };
 
+    let db = context
+        .database
+        .connect()
+        .expect("Couldn't open connection to turso.");
+
+    db.execute(
+        "INSERT INTO posts (id,content,image_key,user_id) VALUES (?,?,?,?)",
+        libsql::params![post.id, post.content, object_key, post.user_id],
+    )
+    .await?;
+
     Ok(())
 }
 
