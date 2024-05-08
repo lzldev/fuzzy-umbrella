@@ -7,7 +7,7 @@
   "main": "./dist/index.js",
   "types": "./bindings/index.ts",
   "scripts": {
-    "dev": "tsup --watch"
+    "dev": "tsup --watch ./src"
   },
   "devDependencies": {
     "tsup": "^8.0.2"

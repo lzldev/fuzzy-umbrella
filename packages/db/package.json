@@ -4,6 +4,10 @@
   "main": "./dist/index.cjs",
   "types": "./src/index.ts",
   "type": "module",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
   "scripts": {
     "dev": "tsup --watch ./src",
     "build": "tsup",
