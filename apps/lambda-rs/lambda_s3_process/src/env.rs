@@ -48,7 +48,7 @@ where
 #[derive(EnumIter)]
 pub enum LambdaEnv {
     OutputBucket,
-    RedisHost,
+    RedisURL,
     TursoURL,
     TursoToken,
 }
@@ -59,9 +59,9 @@ impl EnvVar for LambdaEnv {
     fn var_name(var: &Self) -> &'static str {
         match var {
             Self::OutputBucket => "OUTPUT_BUCKET",
-            Self::RedisHost => "REDIS_HOST",
             Self::TursoURL => "TURSO_URL",
             Self::TursoToken => "TURSO_TOKEN",
+            Self::RedisURL => "REDIS_URL",
         }
     }
 }

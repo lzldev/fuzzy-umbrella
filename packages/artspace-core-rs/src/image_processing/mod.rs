@@ -2,7 +2,7 @@ pub mod encode;
 pub mod process;
 
 use std::{
-    io::Cursor,
+    io::{BufRead, Cursor},
     sync::{Arc, RwLock},
 };
 

@@ -6,6 +6,8 @@ import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 import { Archive } from "@pulumi/pulumi/asset";
 
+const config = new pulumi.Config();
+
 const AWS_Managed_CachingOptimized_CACHE_POLICY_ID =
   "658327ea-f89d-4fab-a63d-7e88639e58f6";
 
@@ -42,7 +44,7 @@ const contentBucket = new aws.s3.Bucket(
     aliases: [
       "urn:pulumi:dev::mediathing::aws:s3/bucket:Bucket::mediathing-content",
     ],
-  },
+  }
 );
 
 const assumeRole = aws.iam.getPolicyDocument({
@@ -70,7 +72,58 @@ new aws.iam.RolePolicyAttachment("lambda_role_execute_attach", {
   policyArn: ManagedPolicy.AWSLambdaExecute,
 });
 
+new aws.iam.RolePolicyAttachment("lambda_elasticache_attach", {
+  role: iamForLambda,
+  policyArn: ManagedPolicy.AmazonElastiCacheFullAccess,
+});
+
+new aws.iam.RolePolicyAttachment("lambda_vpc_attach", {
+  role: iamForLambda,
+  policyArn: ManagedPolicy.AWSLambdaVPCAccessExecutionRole,
+});
+
 const processPostHandlerName = "process-post-handler";
+
+const redis = new aws.elasticache.Cluster("artspace-cache", {
+  clusterId: "artspace-cache",
+  engine: "redis",
+  nodeType: "cache.t3.micro",
+  azMode: "single-az",
+  numCacheNodes: 1,
+  parameterGroupName: "default.redis7",
+  engineVersion: "7.1",
+  ipDiscovery: "ipv4",
+  networkType: "ipv4",
+  port: 6379,
+});
+
+const vpc = new aws.ec2.DefaultVpc("default-vpc", {});
+
+const subnet = new aws.ec2.DefaultSubnet("default-subnet", {
+  availabilityZone: "sa-east-1a",
+  assignIpv6AddressOnCreation: true,
+});
+
+const routeTable = new aws.ec2.DefaultRouteTable("default-route-table", {
+  defaultRouteTableId: vpc.defaultRouteTableId,
+});
+
+// const s3Endpoint = new aws.ec2.VpcEndpoint(
+//   "s3-endpoint",
+//   {
+//     vpcId: vpc.id,
+//     routeTableIds: pulumi.all([routeTable.id]),
+//     serviceName: "com.amazonaws.sa-east-1.s3",
+//     vpcEndpointType: "Gateway",
+//   },
+//   {
+//     aliases: [
+//       {
+//         name: "s3-endpoint",
+//       },
+//     ],
+//   }
+// );
 
 const processPostHandler = new aws.lambda.Function(processPostHandlerName, {
   name: processPostHandlerName,
@@ -78,10 +131,35 @@ const processPostHandler = new aws.lambda.Function(processPostHandlerName, {
   handler: "rust.handler",
   role: iamForLambda.arn,
   runtime: Runtime.CustomAL2023,
+  timeout: 15,
+  vpcConfig: {
+    subnetIds: subnet.id.apply((id) => [id]),
+    ipv6AllowedForDualStack: true,
+    securityGroupIds: vpc.defaultSecurityGroupId.apply((id) => [id]),
+  },
+  loggingConfig: {
+    logFormat: "JSON",
+    applicationLogLevel: "DEBUG",
+  },
   environment: {
-    variables: pulumi.all([contentBucket.bucket]).apply(([contentBucket]) => ({
-      OUTPUT_BUCKET: contentBucket,
-    })),
+    variables: pulumi
+      .all([
+        contentBucket.bucket,
+        config.getSecret("TURSO_URL")!,
+        config.getSecret("TURSO_TOKEN")!,
+        redis.cacheNodes.apply((arr) => {
+          const node = arr.at(0)!;
+
+          return `${node.address}:${node.port}`;
+        }),
+      ])
+      .apply(([contentBucket, turso_url, turso_token, redis_address]) => ({
+        RUST_LOG: "DEBUG",
+        OUTPUT_BUCKET: contentBucket,
+        TURSO_URL: turso_url,
+        TURSO_TOKEN: turso_token,
+        REDIS_URL: `redis://${redis_address}`,
+      })),
   },
 });
 
@@ -121,7 +199,7 @@ const cloudFrontDistribution = new aws.cloudfront.Distribution(
         locations: [],
       },
     },
-  },
+  }
 );
 
 const allowReadFromOAC = aws.iam.getPolicyDocumentOutput({
@@ -155,7 +233,7 @@ const contentBucketOACPolicy = new aws.s3.BucketPolicy(
   {
     bucket: contentBucket.bucket,
     policy: allowReadFromOAC.json,
-  },
+  }
 );
 
 export const posts_bucket_name = postsBucket.id;

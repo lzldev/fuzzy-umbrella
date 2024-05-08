@@ -1,6 +1,7 @@
 use env::EnvTwo;
 use lambda_runtime::tracing::info;
 use libsql::{Builder as TursoBuilder, Database as TursoDatabase};
+use tokio::time::{Duration, Instant};
 
 use crate::env::{EnumMapEnv, LambdaEnv};
 pub mod env;
@@ -21,10 +22,26 @@ impl<'ctx> SharedContext<'ctx> {
         let aws_config = aws_config::load_from_env().await;
         let env = EnvTwo::load_env();
 
-        let redis_host = env.get(LambdaEnv::RedisHost).as_str();
+        let redis_url = env.get(LambdaEnv::RedisURL).as_str();
 
         let redis_client =
-            RedisClient::open(redis_host).expect("Couldn't open connection to redis.");
+            RedisClient::open(redis_url).expect("Couldn't open connection to redis.");
+
+        info!("Connected to redis on : {redis_url}");
+        let start = Instant::now();
+        let mut con = redis_client
+            .get_multiplexed_async_connection_with_timeouts(
+                Duration::from_secs_f64(0.5),
+                Duration::from_secs_f64(0.5),
+            )
+            .await
+            .expect("To Open REDIS test Connection");
+
+        con.send_packed_command(&redis::cmd("PING"))
+            .await
+            .expect("Pinging Redis");
+
+        info!("Redis pinged in {:?}", start.elapsed());
 
         let database = TursoBuilder::new_remote(
             env.get(LambdaEnv::TursoURL).to_owned(),
@@ -33,8 +50,6 @@ impl<'ctx> SharedContext<'ctx> {
         .build()
         .await
         .expect("Couldn't open connection to turso database.");
-
-        info!("Connected to redis on : {redis_host}");
 
         Self {
             env,

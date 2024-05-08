@@ -15,6 +15,7 @@ export const RedisClientProviderFactory: FactoryProvider<RedisClientProvider> =
         host: env.aws_elasticache_redis_cluster_endpoint_url,
       });
 
+      await redis.get("test-key");
       redis.options.maxRetriesPerRequest = 0;
       await redis.ping();
       redis.options.maxRetriesPerRequest = 20;

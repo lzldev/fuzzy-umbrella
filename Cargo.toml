@@ -16,7 +16,7 @@ structmap = { version = "0.1.6" }
 structmap-derive = { version = "0.1.6" }
 
 #DB
-libsql = { version = "0.3.3", default-features = false, features = ["remote"] }
+libsql = { version = "0.3.3" }
 
 #Async
 tokio = { version = "1", features = ["macros"] }

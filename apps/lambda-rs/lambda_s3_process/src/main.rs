@@ -1,10 +1,12 @@
+use std::time::Duration;
+
 use anyhow::anyhow;
 use artspace_core::{
     image_processing::{
         process::{ProcessingPlan, ProcessingPlanType},
         process_image_vec,
     },
-    redis::{keys::prepared_post_key, ArtsSpaceRedisCommands},
+    redis::keys::prepared_post_key,
 };
 
 use artspace_shared::PreparedPost;
@@ -12,7 +14,7 @@ use aws_lambda_events::event::s3::S3Event;
 use aws_sdk_s3::primitives::ByteStream;
 use lambda_runtime::{
     run, service_fn,
-    tracing::{self, debug, error, info},
+    tracing::{self, error, info},
     Error, LambdaEvent,
 };
 
@@ -22,10 +24,11 @@ use lambda_s3_process::{
     SharedContext,
 };
 
-use tokio::task::JoinSet;
+use redis::AsyncCommands;
+use tokio::{task::JoinSet, time::Instant};
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    tracing::init_default_subscriber();
+    tracing::subscriber::fmt().without_time().json().init();
 
     let context = SharedContext::new().await;
     info!("Lambda Runtime STARTING");
@@ -56,7 +59,7 @@ async fn function_handler<'a>(
     // Extract some useful information from the request
     let payload = event.payload;
 
-    info!("EVENT [{payload:?}]");
+    info!("EVENT {payload:?}");
 
     let record = match payload.records.first() {
         Some(r) => r,
@@ -70,6 +73,8 @@ async fn function_handler<'a>(
             return Err(anyhow!("Event not supported"));
         }
     }
+
+    info!("SELECTED RECORD: {record:#?}");
 
     let bucket_name = record.s3.bucket.name.clone().unwrap();
     let object_key = record.s3.object.key.clone().unwrap();
@@ -89,7 +94,7 @@ async fn function_handler<'a>(
         }
     };
 
-    debug!("Object[{object:?}]");
+    info!("Object[{object:?}]");
 
     let body: Vec<u8> = object
         .body
@@ -100,10 +105,10 @@ async fn function_handler<'a>(
         .into();
 
     let object_key = parse_object_key(&object_key);
-    debug!("object_key[{object_key}]");
+    info!("object_key[{object_key}]");
 
     let plan = get_plan(object_key.as_str());
-    debug!("Processing Plan [{plan:?}]");
+    info!("Processing Plan [{plan:?}]");
 
     let output = process_image_vec(body, plan)
         .await
@@ -156,45 +161,59 @@ async fn function_handler<'a>(
         }
     }
 
+    info!("Finished uploading");
+
+    let start = Instant::now();
     let post = {
         let mut redis = context
             .redis_client
-            .get_multiplexed_async_connection()
+            .get_multiplexed_async_connection_with_timeouts(
+                Duration::from_millis(250),
+                Duration::from_millis(250),
+            )
             .await?;
 
         let key = prepared_post_key(&object_key.as_str());
-        debug!("{key:?}");
+        info!("KEY:{key:?}");
 
-        if !redis.hmap_exists(&key).await? {
-            return Err(anyhow!("PreparedPost not found in Redis."));
+        match redis.exists(&key).await {
+            Ok(true) => (),
+            Ok(false) => return Err(anyhow!("PreparedPost not found in Redis.")),
+            Err(_) => return Err(anyhow!("Error trying to check if PreparedPost Exists")),
         };
 
-        let post = redis.hmap_get::<_, PreparedPost>(&key).await?;
-
-        if post.id.as_str() == "" {
-            return Err(anyhow!("PreparedPost has no ID."));
-        }
+        let post: String = redis.get(&key).await?;
+        let post: PreparedPost = serde_json::from_str(&post)?;
 
         tokio::spawn(async move {
-            match redis.hmap_clear(&key).await {
+            match redis.del::<_, usize>(key).await {
                 Ok(r) => info!("Redis Cleanup {r:?} keys deleted"),
-                Err(e) => error!("Redis Clenup Error {e:?}"),
+                Err(e) => error!("Redis Cleanup Error {e:?}"),
             };
         });
 
         post
     };
 
+    info!("Post Processing time:{:?}", start.elapsed());
+    info!("Post: {:?}", post);
+
     let db = context
         .database
         .connect()
         .expect("Couldn't open connection to turso.");
 
-    db.execute(
-        "INSERT INTO posts (id,content,image_key,user_id) VALUES (?,?,?,?)",
-        libsql::params![post.id, post.content, object_key, post.user_id],
-    )
-    .await?;
+    let insert = db
+        .execute(
+            "INSERT INTO posts (id,content,image_key,user_id) VALUES (?,?,?,?)",
+            libsql::params![post.id, post.content, object_key, post.user_id],
+        )
+        .await;
+
+    match insert {
+        Ok(r) => info!("Post Insert Success {r:?}"),
+        Err(err) => error!("Failed to insert Post {err:#?}"),
+    }
 
     Ok(())
 }

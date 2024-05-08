@@ -15,6 +15,7 @@ import { Database, DatabaseProvider } from "~/app/database/database.provider";
 import { ClerkUserID } from "../auth/clerk/clerk.decorator";
 import { users } from "@artspace/db";
 import { eq } from "drizzle-orm";
+import { PreparedPost } from "artspace-shared";
 import { NewPostSchema } from "artspace-schema";
 
 @Controller("posts")
@@ -53,11 +54,14 @@ export class PostsController {
 
     const uuid = v1();
 
-    const post = {
+    const post: PreparedPost = {
       id: uuid,
       content: data.content,
-      userId: user.clerk_id,
+      userId: user.id.toString(),
     };
+
+    //TODO: Move keys into a service.
+    void this.redis.set(`post:create:${uuid}`, JSON.stringify(post));
 
     const fileName = uuid;
 
@@ -68,8 +72,6 @@ export class PostsController {
         expected_file_size: data.fileSize,
       }
     );
-
-    void this.redis.hset(`post:${uuid}`, post);
 
     return { fileName, presignedPost };
   }
