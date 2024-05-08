@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { RouterModule } from "@nestjs/core";
+import { APP_GUARD, RouterModule } from "@nestjs/core";
 import { PingModule } from "~/app/api/ping/ping.module";
 import { PostsModule } from "~/app/api/posts/posts.module";
 import { AuthModule } from "./auth/auth.module";
@@ -14,6 +14,12 @@ import { ClerkGuard } from "./auth/clerk/clerk.guard";
       { path: "api", module: PingModule },
       { path: "api", module: PostsModule },
     ]),
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ClerkGuard,
+    },
   ],
 })
 export class ApiModule {}

@@ -1,13 +1,5 @@
-import {
-  Body,
-  Controller,
-  HttpException,
-  Inject,
-  Post,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, HttpException, Inject, Post } from "@nestjs/common";
 import { StorageService } from "~/app/storage/storage.service";
-import { ClerkGuard } from "../auth/clerk/clerk.guard";
 import { RedisClient, RedisClientProvider } from "~/app/redis/redis.provider";
 import { v1 } from "uuid";
 
@@ -19,7 +11,6 @@ import { PreparedPost } from "artspace-shared";
 import { NewPostSchema } from "artspace-schema";
 
 @Controller("posts")
-@UseGuards(ClerkGuard)
 export class PostsController {
   @Database()
   private readonly database: DatabaseProvider;

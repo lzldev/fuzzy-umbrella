@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import * as cookieParser from "cookie-parser";
 import { AppModule } from "./app/app.module";
+import { ClerkGuard } from "./app/api/auth/clerk/clerk.guard";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
