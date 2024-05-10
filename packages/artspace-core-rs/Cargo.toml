@@ -19,6 +19,8 @@ tokio = { workspace = true }
 anyhow = { workspace = true }
 redis = { workspace = true, features = ["tokio-comp"] }
 
+strum = { workspace = true }
+
 structmap = { workspace = true }
 structmap-derive = { workspace = true }
 
