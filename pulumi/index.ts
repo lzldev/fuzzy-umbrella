@@ -5,6 +5,15 @@ import { Runtime } from "@pulumi/aws/lambda";
 import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 import { Archive } from "@pulumi/pulumi/asset";
+import { readFileSync } from "fs";
+
+const svixIps = (() => {
+  const ips = JSON.parse(readFileSync("./svixip.json").toString());
+
+  return Object.entries(ips).flatMap(([k, v]) => {
+    return Object.values(v as object);
+  });
+})();
 
 const config = new pulumi.Config();
 
@@ -62,6 +71,38 @@ const assumeRole = aws.iam.getPolicyDocument({
   ],
 });
 
+const iamForLambdaWebhooks = new aws.iam.Role("iam_for_lambda_webhooks", {
+  name: "iam_for_lambda_webhooks",
+  assumeRolePolicy: assumeRole.then((assumeRole) => assumeRole.json),
+});
+
+const svixExecuteFunctionsDocument = aws.iam.getPolicyDocumentOutput({
+  policyId: "SVIX",
+  statements: [
+    {
+      effect: "Allow",
+      actions: ["lambda:InvokeFunctionUrl"],
+      resources: ["*"],
+      conditions: [
+        { test: "IpAddress", variable: "aws:sourceIp", values: svixIps },
+      ],
+    },
+  ],
+});
+
+const svixInvokeFunctionPolicy = new aws.iam.Policy(
+  "svix_invoke_function_policy",
+  {
+    description: "Allow svix ip's to invoke the lambda url",
+    policy: svixExecuteFunctionsDocument.json,
+  }
+);
+
+new aws.iam.RolePolicyAttachment("lambda_webhook_svix_invoke_attach", {
+  role: iamForLambdaWebhooks,
+  policyArn: svixInvokeFunctionPolicy.arn,
+});
+
 const iamForLambda = new aws.iam.Role("iam_for_lambda", {
   name: "iam_for_lambda",
   assumeRolePolicy: assumeRole.then((assumeRole) => assumeRole.json),
@@ -108,26 +149,11 @@ const routeTable = new aws.ec2.DefaultRouteTable("default-route-table", {
   defaultRouteTableId: vpc.defaultRouteTableId,
 });
 
-// const s3Endpoint = new aws.ec2.VpcEndpoint(
-//   "s3-endpoint",
-//   {
-//     vpcId: vpc.id,
-//     routeTableIds: pulumi.all([routeTable.id]),
-//     serviceName: "com.amazonaws.sa-east-1.s3",
-//     vpcEndpointType: "Gateway",
-//   },
-//   {
-//     aliases: [
-//       {
-//         name: "s3-endpoint",
-//       },
-//     ],
-//   }
-// );
-
 const processPostHandler = new aws.lambda.Function(processPostHandlerName, {
   name: processPostHandlerName,
-  code: new pulumi.asset.FileArchive("fns3process.zip"),
+  code: new pulumi.asset.FileArchive(
+    "../target/lambda/lambda_s3_process/bootstrap.zip"
+  ),
   handler: "rust.handler",
   role: iamForLambda.arn,
   runtime: Runtime.CustomAL2023,
