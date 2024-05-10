@@ -16,6 +16,9 @@ export const DatabaseProviderFactory: FactoryProvider<DatabaseProvider> = {
   },
 };
 
+/**
+ * Database Injection Decorator
+ */
 export function Database() {
   return applyDecorators(Inject(DatabaseProviderToken));
 }

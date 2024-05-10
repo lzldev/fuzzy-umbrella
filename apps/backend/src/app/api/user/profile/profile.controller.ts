@@ -1,19 +1,24 @@
-import { Controller, Get, Inject, Injectable, Param } from "@nestjs/common";
+import { Controller, Get, Inject, Param } from "@nestjs/common";
 import { ProfileService } from "./profile.service";
 import { Public } from "../../auth/public.decorator";
-import { ClerkUser, ClerkUserParam } from "../../auth/clerk/clerk.decorator";
-import { User } from "@clerk/clerk-sdk-node";
+import { ClerkUser, ClerkUserID } from "../../auth/clerk/clerk.decorator";
+import { ClerkService } from "../../auth/clerk/clerk.service";
 
 @Controller("profile")
 export class ProfileController {
   @Inject()
   private profileService: ProfileService;
 
+  @Inject()
+  private clerkService: ClerkService;
+
   @Get("/")
   @ClerkUser()
-  public currentUser(@ClerkUserParam() clerkUser: User) {
-    console.log(clerkUser);
-    this.profileService.getUserProfile(1);
+  public async currentUser(@ClerkUserID() clerkUserId: string) {
+    const userId = await this.clerkService.getUserIdFromClerkID(clerkUserId);
+    const profile = await this.profileService.getUserProfile(userId);
+
+    return profile;
   }
 
   @Public()

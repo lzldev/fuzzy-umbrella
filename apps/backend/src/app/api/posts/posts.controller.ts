@@ -9,6 +9,7 @@ import { users } from "@artspace/db";
 import { eq } from "drizzle-orm";
 import { PreparedPost } from "artspace-shared";
 import { NewPostSchema } from "artspace-schema";
+import { createPostKey } from "~/app/redis/redis.keys";
 
 @Controller("posts")
 export class PostsController {
@@ -52,7 +53,7 @@ export class PostsController {
     };
 
     //TODO: Move keys into a service.
-    void this.redis.set(`post:create:${uuid}`, JSON.stringify(post));
+    void this.redis.set(createPostKey(uuid), JSON.stringify(post));
 
     const fileName = uuid;
 

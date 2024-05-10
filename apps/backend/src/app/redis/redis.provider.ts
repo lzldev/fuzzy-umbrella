@@ -24,6 +24,10 @@ export const RedisClientProviderFactory: FactoryProvider<RedisClientProvider> =
     },
   };
 
+/**
+ *
+ * Redis Client Decorator
+ */
 export function RedisClient() {
   return applyDecorators(Inject(REDIS_PROVIDER_KEY));
 }

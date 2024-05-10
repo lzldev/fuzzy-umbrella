@@ -8,7 +8,7 @@ export class ProfileService {
   @Database()
   private database: DatabaseProvider;
 
-  public getUserProfile(userId: number) {
+  public async getUserProfile(userId: number) {
     return this.database.query.users
       .findFirst({
         columns: {

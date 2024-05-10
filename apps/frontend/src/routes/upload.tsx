@@ -13,7 +13,7 @@ export type PresignedPost = {
   fields: Record<string, string>;
 };
 
-export const Route = createFileRoute("/funny")({
+export const Route = createFileRoute("/upload")({
   component: FileUploadForm,
 });
 

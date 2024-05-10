@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "dotenv -e ../../.env -- vite",
     "preview": "dotenv -e ../../.env -- vite preview",
-    "build": "tsc && vite build"
+    "build": "tsc && vite build",
+    "build:unsafe": "vite build"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.0.0",

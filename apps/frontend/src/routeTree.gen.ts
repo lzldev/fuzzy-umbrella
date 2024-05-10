@@ -11,21 +11,21 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as UploadImport } from './routes/upload'
 import { Route as TestImport } from './routes/test'
-import { Route as FunnyImport } from './routes/funny'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthProfileImport } from './routes/_auth/profile'
 
 // Create/Update Routes
 
-const TestRoute = TestImport.update({
-  path: '/test',
+const UploadRoute = UploadImport.update({
+  path: '/upload',
   getParentRoute: () => rootRoute,
 } as any)
 
-const FunnyRoute = FunnyImport.update({
-  path: '/funny',
+const TestRoute = TestImport.update({
+  path: '/test',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -56,12 +56,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthImport
       parentRoute: typeof rootRoute
     }
-    '/funny': {
-      preLoaderRoute: typeof FunnyImport
-      parentRoute: typeof rootRoute
-    }
     '/test': {
       preLoaderRoute: typeof TestImport
+      parentRoute: typeof rootRoute
+    }
+    '/upload': {
+      preLoaderRoute: typeof UploadImport
       parentRoute: typeof rootRoute
     }
     '/_auth/profile': {
@@ -76,8 +76,8 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   AuthRoute.addChildren([AuthProfileRoute]),
-  FunnyRoute,
   TestRoute,
+  UploadRoute,
 ])
 
 /* prettier-ignore-end */

@@ -33,15 +33,16 @@ function LayoutComponent() {
       });
     }
   }, [auth, navigate]);
+
   if (!auth.isLoaded)
     return (
       <div className="flex flex-1 items-center justify-center">Loading...</div>
     );
+
   if (!auth.isSignedIn) return <></>;
 
   return (
     <div>
-      <div className="bg-red-500">funnny</div>
       <Outlet />
     </div>
   );
