@@ -103,6 +103,57 @@ new aws.iam.RolePolicyAttachment("lambda_webhook_svix_invoke_attach", {
   policyArn: svixInvokeFunctionPolicy.arn,
 });
 
+new aws.iam.RolePolicyAttachment("lambda_webhook_execute_attach", {
+  role: iamForLambdaWebhooks,
+  policyArn: ManagedPolicy.AWSLambdaExecute,
+});
+
+const clerkWebhookName = "clerk_webhook_handler";
+
+const clerkWebhookHandler = new aws.lambda.Function(clerkWebhookName, {
+  name: clerkWebhookName,
+  code: new pulumi.asset.FileArchive(
+    "../target/lambda/webhook-user-clerk/bootstrap.zip"
+  ),
+  handler: "rust.handler",
+  role: iamForLambdaWebhooks.arn,
+  runtime: Runtime.CustomAL2023,
+  timeout: 15,
+  loggingConfig: {
+    logFormat: "JSON",
+    applicationLogLevel: "DEBUG",
+  },
+  environment: {
+    variables: pulumi
+      .all([
+        config.getSecret("WEBHOOK_SECRET")!,
+        config.getSecret("TURSO_URL")!,
+        config.getSecret("TURSO_TOKEN")!,
+      ])
+      .apply(([webhookSecret, tursoUrl, tursoToken]) => ({
+        WEBHOOK_SECRET: webhookSecret,
+        TURSO_URL: tursoUrl,
+        TURSO_TOKEN: tursoToken,
+      })),
+  },
+});
+
+//TODO: This should't be required if the stack is destroyed
+const clerkWebhookNameLogGroup = new aws.cloudwatch.LogGroup(
+  "webhook-log-group",
+  {
+    name: `/aws/lambda/${clerkWebhookName}`,
+    retentionInDays: 1,
+  }
+);
+
+const clerkWebhookHandleUrl = new aws.lambda.FunctionUrl("clerk_webhook_url", {
+  functionName: clerkWebhookHandler.name,
+  authorizationType: "NONE",
+});
+
+export const clerk_webhook_url = clerkWebhookHandleUrl.functionUrl;
+
 const iamForLambda = new aws.iam.Role("iam_for_lambda", {
   name: "iam_for_lambda",
   assumeRolePolicy: assumeRole.then((assumeRole) => assumeRole.json),

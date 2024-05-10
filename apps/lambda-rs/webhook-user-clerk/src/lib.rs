@@ -17,7 +17,7 @@ impl WebhookClerkContext {
 
         let database = TursoBuilder::new_remote(
             env.get_env_var(WebhookClerkEnvVars::TursoURL),
-            env.get_env_var(WebhookClerkEnvVars::TursoURL),
+            env.get_env_var(WebhookClerkEnvVars::TursoToken),
         )
         .build()
         .await
