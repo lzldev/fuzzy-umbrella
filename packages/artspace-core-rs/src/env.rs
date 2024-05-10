@@ -32,7 +32,7 @@ where
         Self::with_env_map(map)
     }
 
-    fn get_value(&self, env_var: T) -> String {
+    fn get_env_var(&self, env_var: T) -> String {
         let map = self.get_map();
         let key = env_var.get_var_name();
 

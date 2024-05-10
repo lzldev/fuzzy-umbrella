@@ -46,7 +46,7 @@ async fn function_handler(
             .unwrap());
     }
 
-    let message: WebhookMessage = {
+    let message: WebhookMessage =
         match serde_json::from_slice::<WebhookMessage>(req.body().as_ref()) {
             Ok(message) => message,
             Err(err) => {
@@ -55,11 +55,11 @@ async fn function_handler(
                     .body(format!("Invalid Webhook Message \n {err:#?}").into())
                     .unwrap())
             }
-        }
-    };
+        };
 
     match message._type.as_str() {
         "user.created" => create_user(message, context).await,
+        "user.updated" => update_user(message, context).await,
         _ => Ok(Response::builder()
             .status(StatusCode::BAD_REQUEST)
             .body("Webhook Event not supported".into())
@@ -71,7 +71,7 @@ async fn create_user(
     event: WebhookMessage,
     context: &WebhookClerkContext,
 ) -> Result<Response<Body>, Error> {
-    info!("[user.created] {:?}", &event);
+    info!("[USER.CREATED] {:?}", &event);
 
     let email = event
         .data
@@ -100,6 +100,45 @@ async fn create_user(
         .body(
             json!({
               "message": "user created",
+            })
+            .to_string()
+            .into(),
+        )?)
+}
+
+async fn update_user(
+    event: WebhookMessage,
+    context: &WebhookClerkContext,
+) -> Result<Response<Body>, Error> {
+    info!("[USER.UPDATED] {:?}", &event);
+
+    let email = event
+        .data
+        .email_addresses
+        .first()
+        .expect("User has no email address")
+        .clone();
+
+    let db = context.database.connect().unwrap();
+
+    db.execute(
+        r#"UPDATE users SET "username" = ?, "email" = ?, "image_url" = ?, "clerk_updated_at" = ? WHERE "clerk_id" = ?"#,
+        libsql::params![
+            event.data.username,
+            email.email_address,
+            event.data.image_url,
+            event.data.updated_at,
+            event.data.id,
+        ],
+    )
+    .await?;
+
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "application/json")
+        .body(
+            json!({
+              "message": "user updated",
             })
             .to_string()
             .into(),
