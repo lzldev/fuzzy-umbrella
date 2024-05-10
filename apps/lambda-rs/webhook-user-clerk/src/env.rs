@@ -2,20 +2,20 @@ use artspace_core::env::{EnvContainer, EnvEnum, EnvMap};
 use strum::EnumIter;
 
 #[derive(EnumIter)]
-pub enum LambdaEnv {
+pub enum WebhookClerkEnvVars {
     WebhookSecret,
     ClerkSecret,
     TursoURL,
     TursoToken,
 }
 
-impl EnvEnum for LambdaEnv {
+impl EnvEnum for WebhookClerkEnvVars {
     fn var_name(var: &Self) -> &'static str {
         match var {
-            LambdaEnv::WebhookSecret => "WEBHOOK_SECRET",
-            LambdaEnv::ClerkSecret => "CLERK_SECRET_KEY",
-            LambdaEnv::TursoURL => "TURSO_URL",
-            LambdaEnv::TursoToken => "TURSO_TOKEN",
+            WebhookClerkEnvVars::WebhookSecret => "WEBHOOK_SECRET",
+            WebhookClerkEnvVars::ClerkSecret => "CLERK_SECRET_KEY",
+            WebhookClerkEnvVars::TursoURL => "TURSO_URL",
+            WebhookClerkEnvVars::TursoToken => "TURSO_TOKEN",
         }
     }
 }
@@ -24,7 +24,7 @@ pub struct WebhookClerkEnv {
     map: EnvMap,
 }
 
-impl EnvContainer<LambdaEnv> for WebhookClerkEnv {
+impl EnvContainer<WebhookClerkEnvVars> for WebhookClerkEnv {
     fn get_map(&self) -> &EnvMap {
         &self.map
     }
