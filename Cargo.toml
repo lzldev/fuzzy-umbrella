@@ -40,3 +40,8 @@ image = { version = "0.25.1" }
 
 redis = { version = "0.25.3", features = ["tokio-comp"] }
 redis-macros = { version = "0.3.0" }
+
+
+#webhook_clerk
+svix = { version = "1.21.0" }
+clerk-rs = "0.2.3"

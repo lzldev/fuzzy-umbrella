@@ -1819,16 +1819,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lambda_http_test"
-version = "0.1.0"
-dependencies = [
- "lambda_http",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "lambda_runtime"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1888,7 +1878,6 @@ dependencies = [
  "aws-sdk-s3",
  "aws_lambda_events",
  "lambda_runtime",
- "lazy_static",
  "libsql",
  "rayon",
  "redis",
@@ -1941,7 +1930,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c2a198fb6b0eada2a8df47933734e6d35d350665a33a3593d7164fa52c75c19"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.5",
 ]
 
 [[package]]
@@ -3882,6 +3871,19 @@ name = "wasm-bindgen-shared"
 version = "0.2.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
+
+[[package]]
+name = "webhook-user-clerk"
+version = "0.1.0"
+dependencies = [
+ "artspace_core",
+ "artspace_shared",
+ "lambda_http",
+ "libsql",
+ "serde",
+ "serde_json",
+ "tokio",
+]
 
 [[package]]
 name = "webpki-roots"

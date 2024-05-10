@@ -5,7 +5,6 @@ use redis::{AsyncCommands, RedisError, ToRedisArgs};
 use structmap::{FromMap, ToMap};
 
 use crate::into_tuple_vec::IntoTupleVec;
-
 #[allow(async_fn_in_trait)]
 
 pub trait ArtsSpaceRedisCommands
@@ -68,7 +67,7 @@ pub mod serde {
     use std::{collections::BTreeMap, str::FromStr};
 
     use anyhow::{anyhow, Context};
-    use redis::{AsyncCommands, RedisError, ToRedisArgs};
+    use redis::{AsyncCommands, ToRedisArgs};
     use serde::{de::DeserializeOwned, Serialize};
 
     #[allow(async_fn_in_trait)]

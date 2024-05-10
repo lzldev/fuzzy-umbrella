@@ -12,5 +12,3 @@ pub struct PreparedPost {
     pub content: String,
     pub user_id: String,
 }
-
-trait ArtspaceObject {}

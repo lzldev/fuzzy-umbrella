@@ -1,6 +1,4 @@
-use lambda_runtime::tracing::info;
-use libsql::{Builder as TursoBuilder, Database as TursoDatabase};
-use tokio::time::{Duration, Instant};
+use libsql::Builder as TursoBuilder;
 
 #[tokio::test]
 async fn connect_to_libsql() {

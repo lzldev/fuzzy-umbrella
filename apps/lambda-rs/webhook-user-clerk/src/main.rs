@@ -1,8 +1,4 @@
-use lambda_http::{
-    run, service_fn,
-    tracing::{self},
-    Body, Error, Request, RequestExt, Response,
-};
+use lambda_http::{run, service_fn, tracing, Body, Error, Request, RequestExt, Response};
 
 /// This is the main body for the function.
 /// Write your code inside it.
@@ -23,7 +19,6 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         .header("content-type", "text/html")
         .body(message.into())
         .map_err(Box::new)?;
-
     Ok(resp)
 }
 
