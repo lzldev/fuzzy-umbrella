@@ -45,4 +45,4 @@ redis-macros = { version = "0.3.0" }
 #webhook_clerk
 svix = { version = "1.21.0", features = ["rustls-tls"] }
 
-clerk-rs = "0.2.3"
+clerk-rs = { version = "0.2.3" }

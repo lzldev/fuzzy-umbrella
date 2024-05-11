@@ -4,6 +4,7 @@ use strum::EnumIter;
 #[derive(EnumIter)]
 pub enum WebhookClerkEnvVars {
     WebhookSecret,
+    ClerkSecret,
     TursoURL,
     TursoToken,
 }
@@ -13,6 +14,7 @@ impl EnvEnum for WebhookClerkEnvVars {
         match var {
             WebhookClerkEnvVars::WebhookSecret => "WEBHOOK_SECRET",
             WebhookClerkEnvVars::TursoURL => "TURSO_URL",
+            WebhookClerkEnvVars::ClerkSecret => "CLERK_SECRET_KEY",
             WebhookClerkEnvVars::TursoToken => "TURSO_TOKEN",
         }
     }

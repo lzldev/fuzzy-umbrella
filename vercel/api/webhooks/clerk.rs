@@ -20,7 +20,7 @@ pub async fn handler(req: Request) -> Result<Response<Body>, Error> {
             .into(),
         )?);
     }
-
+    
     println!("[clerk] Valid signature");
     let user = serde_json::from_slice::<WebhookMessage>(req.body().as_ref());
 

@@ -138,7 +138,6 @@ const clerkWebhookHandler = new aws.lambda.Function(clerkWebhookName, {
   },
 });
 
-//TODO: This should't be required if the stack is destroyed
 const clerkWebhookNameLogGroup = new aws.cloudwatch.LogGroup(
   "webhook-log-group",
   {

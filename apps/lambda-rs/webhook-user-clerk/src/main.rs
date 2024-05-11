@@ -7,9 +7,11 @@ use lambda_http::{
 };
 use serde_json::json;
 use webhook_user_clerk::{
-    clerk::WebhookMessage, env::WebhookClerkEnvVars, webhooks::verify_webhook, WebhookClerkContext,
+    clerk::{update_user_metadata, WebhookMessage},
+    env::WebhookClerkEnvVars,
+    webhooks::verify_webhook,
+    PartialUser, WebhookClerkContext,
 };
-
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing::init_default_subscriber();
@@ -71,7 +73,7 @@ async fn create_user(
     event: WebhookMessage,
     context: &WebhookClerkContext,
 ) -> Result<Response<Body>, Error> {
-    info!("[USER.CREATED] {:?}", &event);
+    info!("USER.CREATED {:?}", &event);
 
     let email = event
         .data
@@ -81,11 +83,12 @@ async fn create_user(
         .clone();
 
     let db = context.database.connect().unwrap();
+    let clerk_id = event.data.id;
 
-    db.execute(
-        "INSERT INTO users (clerk_id,username,email, image_url, clerk_updated_at) VALUES (?, ?, ?, ?, ?)",
+    let mut rows = db.query(
+        "INSERT INTO users (clerk_id,username,email, image_url, clerk_updated_at) VALUES (?, ?, ?, ?, ?) RETURNING id,clerk_id",
         libsql::params![
-            event.data.id,
+            clerk_id,
             event.data.username,
             email.email_address,
             event.data.image_url,
@@ -93,6 +96,19 @@ async fn create_user(
         ],
     )
     .await?;
+
+    let new_user = libsql::de::from_row::<PartialUser>(
+        &rows
+            .next()
+            .await
+            .expect("Insert query didn't new value.")
+            .unwrap(),
+    )
+    .expect("Couldn't serialize partial user");
+
+    update_user_metadata(new_user, &context)
+        .await
+        .expect("to update user metadata");
 
     Ok(Response::builder()
         .status(StatusCode::OK)
