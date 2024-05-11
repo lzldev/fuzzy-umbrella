@@ -1,10 +1,10 @@
-use artspace_core::env::EnvContainer;
-use rocket::http::{CookieJar, Method, Status};
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use ws_backend::{env::WSBackendEnvVars, ClerkFairing, WSBackendState};
-
 #[macro_use]
 extern crate rocket;
+
+use artspace_core::env::EnvContainer;
+use rocket::http::{Method, Status};
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use ws_backend::{env::WSBackendEnvVars, ClerkFairing, WSBackendState};
 
 #[launch]
 async fn launch() -> _ {
@@ -40,7 +40,7 @@ async fn launch() -> _ {
 }
 
 #[get("/ping")]
-fn ping_get(cookies: &CookieJar<'_>) -> &'static str {
+fn ping_get() -> &'static str {
     "Pong"
 }
 

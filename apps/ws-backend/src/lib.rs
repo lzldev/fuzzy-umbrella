@@ -1,14 +1,13 @@
-use std::borrow::Cow;
+pub mod env;
+pub mod jwt;
 
 use anyhow::anyhow;
 use rocket::{
-    fairing::{Fairing, Info, Kind},
+    fairing::{Fairing, Info},
     http::{uri::Origin, Status},
     request::{self, FromRequest},
     Data, Request,
 };
-
-pub mod env;
 
 pub struct WSBackendState {}
 impl WSBackendState {
@@ -19,6 +18,7 @@ impl WSBackendState {
 
 pub struct ClerkUser;
 
+#[allow(unused_variables, dead_code)]
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for ClerkUser {
     type Error = anyhow::Error;
@@ -39,7 +39,6 @@ impl<'r> FromRequest<'r> for ClerkUser {
             }
         };
 
-        /* .. */
         request::Outcome::Success(Self {})
     }
 }
@@ -47,6 +46,7 @@ impl<'r> FromRequest<'r> for ClerkUser {
 pub struct ClerkFairing;
 
 #[rocket::async_trait]
+#[allow(unused_variables, dead_code)]
 impl Fairing for ClerkFairing {
     fn info(&self) -> Info {
         Info {
@@ -66,7 +66,6 @@ impl Fairing for ClerkFairing {
         let session_cookie = match request.cookies().get("__session") {
             Some(c) => c,
             None => {
-                dbg!("Unauuth");
                 request.set_uri(Origin::parse("/ws/unauthorized").unwrap());
                 return ();
             }
