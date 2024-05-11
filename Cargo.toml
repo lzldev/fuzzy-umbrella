@@ -1,7 +1,7 @@
 [workspace]
 resolver = '2'
 members = [
-    "apps/lambda-rs/*",
+    "apps/lambda-rs/*", "apps/ws-backend",
     "packages/artspace-core-rs",
     "packages/artspace-shared",
 ]

@@ -18,6 +18,21 @@ function Profile() {
   const [posts, setPosts] = useState<Posts>();
   return (
     <div>
+      <button
+        className="bg-fuchsia-500 p-2 rounded-md text-white kjj"
+        onClick={async () => {
+          const req = await ofetch("http://localhost:8000/ping", {
+            method: "GET",
+            credentials: "include",
+          });
+
+          console.log(req);
+
+          setPosts(req.posts);
+        }}
+      >
+        Test
+      </button>
       <Link to="/upload">
         <button className="bg-fuchsia-500 p-2 rounded-md text-white kjj">
           upload
@@ -26,7 +41,7 @@ function Profile() {
       <button
         className="bg-fuchsia-500 p-2 rounded-md text-white kjj"
         onClick={async () => {
-          const fet = await ofetch<{
+          const res = await ofetch<{
             id: number;
             image_url: string;
             username: string;
@@ -36,9 +51,9 @@ function Profile() {
             credentials: "include",
           });
 
-          console.log(fet);
+          console.log(res);
 
-          setPosts(fet.posts);
+          setPosts(res.posts);
         }}
       >
         fetch

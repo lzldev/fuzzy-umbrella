@@ -35,8 +35,6 @@ async fn function_handler(
     req: Request,
     context: &WebhookClerkContext,
 ) -> Result<Response<Body>, Error> {
-    // Extract some useful information from the request
-
     let secret = (&context.env).get_env_var(WebhookClerkEnvVars::WebhookSecret);
 
     let verify = verify_webhook(secret, &req);
