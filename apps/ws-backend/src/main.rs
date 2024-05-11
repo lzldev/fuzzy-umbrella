@@ -2,12 +2,14 @@
 extern crate rocket;
 
 use artspace_core::env::EnvContainer;
-use rocket::http::Method;
+use rocket::{http::Method, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use tokio::time::Duration;
 use ws_backend::{
     auth::{ClerkFairing, WSBackendJWKS},
+    data::ChatMessage,
     env::WSBackendEnvVars,
-    ClerkUser, WSBackendState,
+    WSBackendState,
 };
 
 #[launch]
@@ -39,7 +41,7 @@ async fn launch() -> _ {
     .to_cors()
     .expect("to build cors options.");
 
-    let state = WSBackendState {};
+    let state = WSBackendState::create().await;
 
     rocket::build()
         .manage::<WSBackendJWKS>(jwks_state)
@@ -48,7 +50,7 @@ async fn launch() -> _ {
         .attach(cors)
         .mount(
             "/ws",
-            routes![ws_backend::auth::unauthorized_get, ping_get, ping_clerk_get],
+            routes![ws_backend::auth::unauthorized_get, ping_get, echo_channel],
         )
 }
 
@@ -57,8 +59,82 @@ fn ping_get() -> &'static str {
     "Pong"
 }
 
-#[get("/ping/clerk")]
-fn ping_clerk_get(clerk: ClerkUser<'_>) -> &'static str {
-    dbg!(&clerk);
-    "Pong"
+#[get("/echo")]
+fn echo_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rocket_ws::Channel<'_> {
+    use rocket::futures::{SinkExt, StreamExt};
+
+    ws.channel(move |mut stream| {
+        Box::pin(async move {
+            let n = state
+                .atomic_counter
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+            let mut interval = tokio::time::interval(Duration::from_secs(60));
+            let _ = interval.tick().await;
+
+            let _ = {
+                let msg_buf = state.msg_buf.read().await;
+                let mut old = msg_buf.range(
+                    ..if msg_buf.len() < 50 {
+                        msg_buf.len()
+                    } else {
+                        50
+                    },
+                );
+
+                while let Some(msg) = old.next() {
+                    let _ = stream.send(msg.content.as_str().into()).await?;
+                }
+            };
+
+            let sender = state.sender.clone();
+            let mut receiver = state.sender.subscribe();
+
+            loop {
+                tokio::select! {
+                    msg = receiver.recv() => {
+                        let msg = msg.expect("To unwrap channel message");
+                        let _ = stream.send(msg.content.as_str().into()).await;
+                    },
+                    _ = interval.tick() => {
+                            sender.send(
+                               ChatMessage {
+                                    user_id:0,
+                                    content:String::from("[SERVER] Hii from Server :3 ")
+                               }
+                            ).unwrap();
+                    },
+                    Some(msg) = stream.next() => {
+                        match msg {
+                            Ok(message) => {
+                                if message.is_text() && message.to_text().unwrap() == "what_count" {
+                                    let v = &state
+                                        .atomic_counter
+                                        .load(std::sync::atomic::Ordering::Relaxed);
+                                    let _ = stream.send(format!("[DEBUG] Connections: {v}").into()).await;
+                                    continue;
+                                }
+
+                                if !message.is_text(){
+                                    continue;
+                                }
+
+                                let txt : &str = message.to_text().unwrap();
+                                sender.send(ChatMessage {
+                                    content:format!("[{}] {}",n,txt).to_owned(),
+                                    user_id:n.clone(),
+                                }).unwrap();
+                            },
+                            Err(_) => break,
+                        }
+                    },
+                }
+            }
+
+            let _ = &state
+                .atomic_counter
+                .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
+            Ok(())
+        })
+    })
 }

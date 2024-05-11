@@ -12,6 +12,9 @@
   --regular-color: #111;
   --regular-font: mediathing, Inter, system-ui, Avenir, Helvetica, Arial,
     sans-serif;
+
+  --navbar-size: 3rem;
+  --screen-minus-navbar: calc(100vh - var(--navbar-size));
 }
 
 body {

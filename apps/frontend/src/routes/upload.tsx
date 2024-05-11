@@ -79,7 +79,12 @@ function FileUploadForm() {
           }}
         />
         <input ref={fileRef} type="file" name="file" size={200} />
-        <button onClick={submit}>Submit</button>
+        <button
+          className="bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
+          onClick={submit}
+        >
+          Submit
+        </button>
       </div>
     </FlexContainer>
   );

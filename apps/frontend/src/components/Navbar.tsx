@@ -8,7 +8,7 @@ import { Link } from "@tanstack/react-router";
 
 export function Navbar() {
   return (
-    <div className="flex min-h-12 max-h-12 items-center w-full overflow-y-auto bg-white p-2 gap-2 justify-between">
+    <div className="flex items-center justify-between w-full gap-2 p-2 overflow-y-auto bg-white min-h-12 max-h-12 h-navbar">
       <div className="flex">
         <Link className="hover:underline" to="/">
           Mediathing
