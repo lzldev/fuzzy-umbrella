@@ -9,7 +9,6 @@ members = [
 [workspace.dependencies]
 #General
 anyhow = { version = "1.0.82" }
-lazy_static = { version = "1.4.0" }
 strum = { version = "0.26.2", features = ["derive"] }
 
 structmap = { version = "0.1.6" }

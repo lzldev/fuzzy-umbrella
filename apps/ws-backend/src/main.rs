@@ -1,17 +1,17 @@
 use artspace_core::env::EnvContainer;
-use rocket::http::{CookieJar, Method};
+use rocket::http::{CookieJar, Method, Status};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use ws_backend::env::WSBackendEnvVars;
+use ws_backend::{env::WSBackendEnvVars, ClerkFairing, WSBackendState};
 
 #[macro_use]
 extern crate rocket;
 
 #[launch]
-fn launch() -> _ {
+async fn launch() -> _ {
     let env = ws_backend::env::WSBackendEnv::load_env();
 
-    let origins = env.get_env_var(WSBackendEnvVars::CORSOrigins);
-    let origins = origins
+    let origins = env
+        .get_env_var(WSBackendEnvVars::CORSOrigins)
         .split(",")
         .map(str::to_owned)
         .collect::<Vec<String>>();
@@ -28,13 +28,23 @@ fn launch() -> _ {
         ..Default::default()
     }
     .to_cors()
-    .expect("To build cors options.");
+    .expect("to build cors options.");
 
-    rocket::build().mount("/", routes![ping_get]).attach(cors)
+    let state = WSBackendState::with_jwks_set().await;
+
+    rocket::build()
+        .manage::<WSBackendState>(state)
+        .attach(ClerkFairing {})
+        .attach(cors)
+        .mount("/ws", routes![ping_get, unauthorized_get])
 }
 
 #[get("/ping")]
 fn ping_get(cookies: &CookieJar<'_>) -> &'static str {
-    dbg!(&cookies.get("__session"));
     "Pong"
+}
+
+#[get("/unauthorized")]
+fn unauthorized_get() -> Status {
+    Status::Unauthorized
 }
