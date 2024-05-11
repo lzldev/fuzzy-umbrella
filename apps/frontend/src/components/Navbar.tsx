@@ -15,9 +15,17 @@ export function Navbar() {
         </Link>
       </div>
       <div className="flex items-center justify-center gap-2">
-        <Link className="hover:underline" to="/profile">
-          profile
-        </Link>
+        <SignedIn>
+          <Link className="hover:underline" to="/upload">
+            post
+          </Link>
+          <Link className="hover:underline" to="/ws">
+            ws
+          </Link>
+          <Link className="hover:underline" to="/profile">
+            profile
+          </Link>
+        </SignedIn>
         <Profile />
       </div>
     </div>
@@ -33,11 +41,7 @@ function Profile() {
         </SignInButton>
       </SignedOut>
       <SignedIn>
-        <UserButton showName>
-          <Link className="hover:underline" to="/login">
-            Profile
-          </Link>
-        </UserButton>
+        <UserButton showName />
       </SignedIn>
     </>
   );

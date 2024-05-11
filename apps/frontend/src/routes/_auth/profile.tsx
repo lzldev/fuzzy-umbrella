@@ -21,7 +21,22 @@ function Profile() {
       <button
         className="bg-fuchsia-500 p-2 rounded-md text-white kjj"
         onClick={async () => {
-          const req = await ofetch("http://localhost:8000/ping", {
+          const req = await ofetch("http://localhost:8000/ws/ping/clerk", {
+            method: "GET",
+            credentials: "include",
+          });
+
+          console.log(req);
+
+          setPosts(req.posts);
+        }}
+      >
+        clerk
+      </button>
+      <button
+        className="bg-fuchsia-500 p-2 rounded-md text-white kjj"
+        onClick={async () => {
+          const req = await ofetch("http://localhost:8000/ws/ping", {
             method: "GET",
             credentials: "include",
           });

@@ -1,0 +1,6 @@
+{
+  "name": "ws-backend",
+  "scripts": {
+    "dev": "cargo watch -x run"
+  }
+}

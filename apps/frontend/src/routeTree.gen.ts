@@ -15,6 +15,7 @@ import { Route as UploadImport } from './routes/upload'
 import { Route as TestImport } from './routes/test'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
+import { Route as AuthWsImport } from './routes/_auth/ws'
 import { Route as AuthProfileImport } from './routes/_auth/profile'
 
 // Create/Update Routes
@@ -37,6 +38,11 @@ const AuthRoute = AuthImport.update({
 const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
+} as any)
+
+const AuthWsRoute = AuthWsImport.update({
+  path: '/ws',
+  getParentRoute: () => AuthRoute,
 } as any)
 
 const AuthProfileRoute = AuthProfileImport.update({
@@ -68,6 +74,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthProfileImport
       parentRoute: typeof AuthImport
     }
+    '/_auth/ws': {
+      preLoaderRoute: typeof AuthWsImport
+      parentRoute: typeof AuthImport
+    }
   }
 }
 
@@ -75,7 +85,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
-  AuthRoute.addChildren([AuthProfileRoute]),
+  AuthRoute.addChildren([AuthProfileRoute, AuthWsRoute]),
   TestRoute,
   UploadRoute,
 ])
