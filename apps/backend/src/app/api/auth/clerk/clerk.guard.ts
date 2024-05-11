@@ -57,8 +57,6 @@ export class ClerkGuard implements CanActivate {
       return false;
     }
 
-    verify.payload.sid;
-
     req[REQ_CLERK_SESSION_ID_KEY] = verify.payload.sid;
     req[REQ_CLERK_USER_ID_KEY] = verify.payload.sub;
 

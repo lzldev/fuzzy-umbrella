@@ -1,81 +1,53 @@
+pub mod auth;
 pub mod env;
 pub mod jwt;
 
 use anyhow::anyhow;
+use jsonwebtoken::TokenData;
+use jwt::Claims;
 use rocket::{
-    fairing::{Fairing, Info},
-    http::{uri::Origin, Status},
+    http::Status,
     request::{self, FromRequest},
-    Data, Request,
+    Request,
 };
 
 pub struct WSBackendState {}
-impl WSBackendState {
-    pub async fn with_jwks_set() -> Self {
-        Self {}
-    }
-}
+impl WSBackendState {}
 
-pub struct ClerkUser;
+#[derive(Debug)]
+pub struct ClerkUser<'r> {
+    pub token: &'r TokenData<Claims>,
+}
 
 #[allow(unused_variables, dead_code)]
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for ClerkUser {
+impl<'r> FromRequest<'r> for ClerkUser<'r> {
     type Error = anyhow::Error;
 
-    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let state = req
-            .rocket()
-            .state::<WSBackendState>()
-            .expect("To get rocket state");
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        let token = request
+            .local_cache_async(async {
+                dbg!("Cache Miss");
 
-        let session_cookie = match req.cookies().get("__session") {
-            Some(r) => r,
-            None => {
-                return request::Outcome::Error((
-                    Status::Unauthorized,
-                    anyhow!(Status::Unauthorized),
-                ))
-            }
-        };
+                let session_cookie = match request.cookies().get("__session") {
+                    Some(r) => r,
+                    None => {
+                        return Err::<TokenData<Claims>, anyhow::Error>(anyhow!(
+                            "Session not found"
+                        ));
+                    }
+                };
 
-        request::Outcome::Success(Self {})
-    }
-}
+                panic!("Tried restoring Token cache without running ClerkFairing")
+            })
+            .await;
 
-pub struct ClerkFairing;
-
-#[rocket::async_trait]
-#[allow(unused_variables, dead_code)]
-impl Fairing for ClerkFairing {
-    fn info(&self) -> Info {
-        Info {
-            name: "Clerk Fairing",
-            kind: rocket::fairing::Kind::Request,
-        }
-    }
-
-    async fn on_request(&self, request: &mut Request<'_>, _: &mut Data<'_>) {
-        let uri = request.uri().path();
-        dbg!(&uri);
-
-        if uri == "/ws/unauthorized" {
-            return;
+        if let Err(err) = token {
+            return request::Outcome::Error((Status::Unauthorized, anyhow!(Status::Unauthorized)));
         }
 
-        let session_cookie = match request.cookies().get("__session") {
-            Some(c) => c,
-            None => {
-                request.set_uri(Origin::parse("/ws/unauthorized").unwrap());
-                return ();
-            }
-        };
+        let token = token.as_ref().unwrap();
 
-        let state = request
-            .rocket()
-            .state::<WSBackendState>()
-            .expect("To Get rocket state");
-
-        dbg!(&session_cookie);
+        request::Outcome::Success(Self { token })
     }
 }

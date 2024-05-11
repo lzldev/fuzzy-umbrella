@@ -2,9 +2,13 @@
 extern crate rocket;
 
 use artspace_core::env::EnvContainer;
-use rocket::http::{Method, Status};
+use rocket::http::Method;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use ws_backend::{env::WSBackendEnvVars, ClerkFairing, WSBackendState};
+use ws_backend::{
+    auth::{ClerkFairing, WSBackendJWKS},
+    env::WSBackendEnvVars,
+    ClerkUser, WSBackendState,
+};
 
 #[launch]
 async fn launch() -> _ {
@@ -15,6 +19,11 @@ async fn launch() -> _ {
         .split(",")
         .map(str::to_owned)
         .collect::<Vec<String>>();
+
+    let jwks_state =
+        WSBackendJWKS::from_uri(env.get_env_var(WSBackendEnvVars::ClerkJWKSUrl).as_str())
+            .await
+            .expect("To create a jwks state.");
 
     dbg!(&origins);
 
@@ -30,13 +39,17 @@ async fn launch() -> _ {
     .to_cors()
     .expect("to build cors options.");
 
-    let state = WSBackendState::with_jwks_set().await;
+    let state = WSBackendState {};
 
     rocket::build()
+        .manage::<WSBackendJWKS>(jwks_state)
         .manage::<WSBackendState>(state)
         .attach(ClerkFairing {})
         .attach(cors)
-        .mount("/ws", routes![ping_get, unauthorized_get])
+        .mount(
+            "/ws",
+            routes![ws_backend::auth::unauthorized_get, ping_get, ping_clerk_get],
+        )
 }
 
 #[get("/ping")]
@@ -44,7 +57,8 @@ fn ping_get() -> &'static str {
     "Pong"
 }
 
-#[get("/unauthorized")]
-fn unauthorized_get() -> Status {
-    Status::Unauthorized
+#[get("/ping/clerk")]
+fn ping_clerk_get(clerk: ClerkUser<'_>) -> &'static str {
+    dbg!(&clerk);
+    "Pong"
 }
