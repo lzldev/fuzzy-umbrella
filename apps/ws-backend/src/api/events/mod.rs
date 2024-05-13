@@ -54,6 +54,13 @@ fn sub_events<'a>(
 
                 let txt = msg.to_text().unwrap();
 
+                if txt == "/debug" {
+                    let dbg_msg = format!("{:#?}", state);
+                    eprintln!("{dbg_msg}");
+                    stream.send(dbg_msg.into()).await.unwrap();
+                    continue;
+                }
+
                 let message = match serde_json::from_str::<ClientMessage>(txt) {
                     Ok(m) => m,
                     Err(err) => {
@@ -90,8 +97,6 @@ fn sub_events<'a>(
                         sender.clone(),
                     )
                     .await;
-
-                let _ = stream.send(msg).await;
             }
 
             Ok(())

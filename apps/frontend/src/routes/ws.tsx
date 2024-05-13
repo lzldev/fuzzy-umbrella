@@ -27,6 +27,7 @@ function WSComponent() {
     });
     ws.addEventListener("message", (event) => {
       console.info("message", event);
+      console.info("message", event.data);
     });
     ws.addEventListener("error", (...args) => {
       console.error("error", ...args);
@@ -95,26 +96,46 @@ function WSComponent() {
                   "bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
                 )}
                 onClick={async () => {
-                  const msg = txtref.current?.value;
+                  const event = txtref.current!.value;
 
-                  wsref.current?.send(msg!);
+                  wsref.current?.send(
+                    JSON.stringify({
+                      event: "unsubscribe",
+                      message: {
+                        eventName: event,
+                      },
+                    } satisfies ClientMessage)
+                  );
                 }}
                 disabled={!isConnected}
               >
-                Send
+                Send Unsub
               </button>
               <button
                 className={clsx(
                   "bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
                 )}
                 onClick={async () => {
-                  const msg = txtref.current?.value;
+                  const event = txtref.current!.value;
+
+                  wsref.current?.send(event);
+                }}
+                disabled={!isConnected}
+              >
+                RAW
+              </button>
+              <button
+                className={clsx(
+                  "bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
+                )}
+                onClick={async () => {
+                  const event = txtref.current!.value;
 
                   wsref.current?.send(
                     JSON.stringify({
                       event: "subscribe",
                       message: {
-                        eventName: "wawawawaa",
+                        eventName: event,
                       },
                     } satisfies ClientMessage)
                   );

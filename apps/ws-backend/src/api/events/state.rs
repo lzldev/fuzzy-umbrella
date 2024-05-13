@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use fred::{
@@ -17,11 +17,15 @@ use super::{
     redis_channel::RedisChannelCommands, user_subscription::UserSubscription, UserChannelSender,
 };
 
+type EventName = Arc<str>;
+type UserId = Arc<str>;
+
 #[derive(Debug)]
 pub struct EventChannelState {
     _manager_task_handle: JoinHandle<()>,
     manager_sender: mpsc::Sender<RedisChannelCommands>,
-    pub subscriptions: Arc<RwLock<HashMap<Arc<str>, HashSet<UserSubscription>>>>,
+    user_events: Mutex<HashMap<UserId, Vec<EventName>>>,
+    subscriptions: Arc<RwLock<HashMap<EventName, HashMap<UserId, UserChannelSender>>>>,
 }
 
 impl EventChannelState {
@@ -77,6 +81,7 @@ impl EventChannelState {
         });
 
         Self {
+            user_events: Mutex::new(HashMap::new()),
             _manager_task_handle: manager_task,
             manager_sender: tx,
             subscriptions,
@@ -88,14 +93,15 @@ impl EventChannelState {
 
         if map.contains_key(&event) {
             let subs = map.get_mut(&event).unwrap();
-            subs.insert(UserSubscription { user, sender });
+            subs.insert(user.clone(), sender);
+            drop(map);
+
+            let mut user_map = self.user_events.lock().unwrap();
+            user_map.get_mut(&user).unwrap().push(event);
             return;
         }
 
-        map.insert(
-            event.clone(),
-            HashSet::from([UserSubscription { user, sender }]),
-        );
+        map.insert(event.clone(), HashMap::from([(user, sender)]));
 
         drop(map);
 
