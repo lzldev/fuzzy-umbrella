@@ -6,6 +6,15 @@ import { defineConfig } from "vite";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), TanStackRouterVite()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          schema: ["@artspace/schema"],
+        },
+      },
+    },
+  },
   resolve: {
     alias: [
       {
