@@ -1,21 +1,20 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, sync::Arc};
 
 use fred::{
     clients::RedisClient,
     interfaces::{ClientLike, EventInterface, PubsubInterface},
     types::RedisConfig,
 };
+
 use tokio::{
-    sync::{mpsc, RwLock},
+    sync::{
+        mpsc::{self, Sender},
+        Mutex, RwLock,
+    },
     task::JoinHandle,
 };
 
-use super::{
-    redis_channel::RedisChannelCommands, user_subscription::UserSubscription, UserChannelSender,
-};
+use super::{redis_channel::RedisChannelCommands, UserChannelSender};
 
 type EventName = Arc<str>;
 type UserId = Arc<str>;
@@ -51,9 +50,26 @@ impl EventChannelState {
             let redis_client = redis_client;
             let mut redis_channel = redis_client.message_rx();
 
-            let handle_redis = |message: fred::types::Message| async {
-                dbg!(message);
-            };
+            async fn handle_redis(
+                message: fred::types::Message,
+                subscriptions: &Arc<RwLock<HashMap<Arc<str>, HashMap<Arc<str>, Sender<Arc<str>>>>>>,
+            ) {
+                let channel: Arc<str> = message.channel.to_string().into();
+                let map = subscriptions.write().await;
+                if !map.contains_key(&channel) {
+                    eprintln!("Subscribed event not found in map {:?}", &channel);
+                    return;
+                }
+
+                let channels = map.get(&channel).unwrap().values();
+                let mut counter = 0;
+                for c in channels {
+                    c.send(channel.clone()).await.unwrap();
+                    counter = counter + 1;
+                }
+
+                dbg!(counter);
+            }
 
             let handle_channel = |command: RedisChannelCommands| async {
                 match command {
@@ -72,10 +88,12 @@ impl EventChannelState {
                 }
             };
 
+            // let handle_channel = Box::pin(handle_channel);
+
             loop {
                 tokio::select! {
                     Some(msg) = rx.recv() => handle_channel(msg).await,
-                    Ok(redis_msg) = redis_channel.recv() => handle_redis(redis_msg).await,
+                    Ok(redis_msg) = redis_channel.recv() => handle_redis(redis_msg,&subscriptions).await,
                 };
             }
         });
@@ -91,19 +109,21 @@ impl EventChannelState {
     pub async fn subscribe(&self, event: Arc<str>, user: Arc<str>, sender: UserChannelSender) {
         let mut map = self.subscriptions.write().await;
 
-        if map.contains_key(&event) {
+        if !map.contains_key(&event) {
+            map.insert(event.clone(), HashMap::from([(user.clone(), sender)]));
+        } else {
             let subs = map.get_mut(&event).unwrap();
             subs.insert(user.clone(), sender);
-            drop(map);
-
-            let mut user_map = self.user_events.lock().unwrap();
-            user_map.get_mut(&user).unwrap().push(event);
-            return;
         }
-
-        map.insert(event.clone(), HashMap::from([(user, sender)]));
-
         drop(map);
+
+        let mut user_map = self.user_events.lock().await;
+        if user_map.contains_key(&user) {
+            user_map.get_mut(&user).unwrap().push(event.clone());
+        } else {
+            user_map.insert(user, vec![event.clone()]);
+        }
+        drop(user_map);
 
         self.manager_sender
             .send(RedisChannelCommands::Sub(event))

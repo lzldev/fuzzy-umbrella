@@ -42,6 +42,7 @@ fn sub_events<'a>(
 
     ws.channel(move |mut stream| {
         Box::pin(async move {
+            let mut _receiver = receiver;
             loop {
                 let msg = match stream.next().await {
                     Some(m) => m?, // This will return an error from the Async block which will skip unsubbing from state.
@@ -55,7 +56,7 @@ fn sub_events<'a>(
                 let txt = msg.to_text().unwrap();
 
                 if txt == "/debug" {
-                    let dbg_msg = format!("{:#?}", state);
+                    let dbg_msg = format!("{:#?}", &state);
                     eprintln!("{dbg_msg}");
                     stream.send(dbg_msg.into()).await.unwrap();
                     continue;
