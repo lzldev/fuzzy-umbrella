@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ClientMessage } from "artspace-shared";
 
 export const Route = createFileRoute("/ws")({
   component: WSComponent,
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/ws")({
 
 function WSComponent() {
   const wsref = useRef<WebSocket>();
-  const txtref = useRef<HTMLTextAreaElement>(null);
+  const txtref = useRef<HTMLInputElement>(null);
 
   const [isConnected, setIsConnected] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -83,20 +84,46 @@ function WSComponent() {
           </div>
 
           <div className="flex flex-col flex-1 gap-1 p-1">
-            <textarea ref={txtref} className="flex-1 outline-none"></textarea>
-            <button
-              className={clsx(
-                "bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
-              )}
-              onClick={async () => {
-                const msg = txtref.current?.value;
+            <input
+              type="text"
+              ref={txtref}
+              className="flex-1 outline-none"
+            ></input>
+            <div className="flex gap-2 *:flex-1">
+              <button
+                className={clsx(
+                  "bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
+                )}
+                onClick={async () => {
+                  const msg = txtref.current?.value;
 
-                wsref.current?.send(msg!);
-              }}
-              disabled={!isConnected}
-            >
-              Send
-            </button>
+                  wsref.current?.send(msg!);
+                }}
+                disabled={!isConnected}
+              >
+                Send
+              </button>
+              <button
+                className={clsx(
+                  "bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
+                )}
+                onClick={async () => {
+                  const msg = txtref.current?.value;
+
+                  wsref.current?.send(
+                    JSON.stringify({
+                      event: "subscribe",
+                      message: {
+                        eventName: "wawawawaa",
+                      },
+                    } satisfies ClientMessage)
+                  );
+                }}
+                disabled={!isConnected}
+              >
+                Send Sub
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -2,4 +2,4 @@
 import type { ErrorMessage } from "./ErrorMessage";
 import type { ReceivedMessage } from "./ReceivedMessage";
 
-export type ServerMessage = { "received": ReceivedMessage } | { "error": ErrorMessage } | "close";
+export type ServerMessage = { "event": "received", "message": ReceivedMessage } | { "event": "error", "message": ErrorMessage } | { "event": "close" };
