@@ -5489,8 +5489,6 @@ dependencies = [
  "serde_json",
  "strum",
  "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

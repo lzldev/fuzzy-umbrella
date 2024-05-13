@@ -6,9 +6,12 @@ use std::sync::Arc;
 
 use artspace_shared::{
     client::ClientMessage,
-    server::{ErrorMessage, ServerMessage},
+    server::{ErrorMessage, ReceivedMessage, ServerMessage},
 };
+use fred::types::Server;
 use rocket::{Build, Rocket, State};
+use rocket_ws::{stream::DuplexStream, Message};
+use tokio::sync::mpsc::Sender;
 use ws_backend::auth::ClerkUser;
 
 use crate::api::events::user_subscription::UserSubscription;
@@ -35,69 +38,100 @@ fn sub_events<'a>(
     let (sender, receiver) = tokio::sync::mpsc::channel::<UserChannelValue>(5);
     let user_id: Arc<str> = user.token.claims.sub.clone().into();
 
-    let _ex_sub = UserSubscription {
-        user: user_id.clone(),
-        sender: sender.clone(),
-    };
+    async fn handle_message(
+        stream: &mut DuplexStream,
+        state: &State<EventChannelState>,
+        user_id: &Arc<str>,
+        sender: &Sender<Arc<str>>,
+        message: Message,
+    ) {
+        if !message.is_text() {
+            return;
+        }
+
+        let txt = message.to_text().unwrap();
+
+        if txt == "/debug" {
+            let dbg_msg = format!("{:#?}", &state);
+            eprintln!("{dbg_msg}");
+            stream.send(dbg_msg.into()).await.unwrap();
+            return;
+        }
+        let message = match serde_json::from_str::<ClientMessage>(txt) {
+            Ok(m) => m,
+            Err(err) => {
+                let error = ServerMessage::Error(ErrorMessage {
+                    message: String::from("Invalid Message"),
+                    cause: err.to_string(),
+                });
+
+                let error = serde_json::to_string(&error).unwrap();
+
+                let _ = stream.send(error.into()).await;
+                return;
+            }
+        };
+
+        let subscribe_message = match message {
+            ClientMessage::Subscribe(msg) => msg,
+            _ => {
+                let error = ServerMessage::Error(ErrorMessage {
+                    message: String::from("Message not implemented yet."),
+                    cause: "".into(),
+                });
+                let error = serde_json::to_string(&error).unwrap();
+
+                let _ = stream.send(error.into()).await;
+                return;
+            }
+        };
+
+        let _ = &state
+            .subscribe(
+                subscribe_message.event_name.into(),
+                user_id.clone(),
+                sender.clone(),
+            )
+            .await;
+    }
+
+    async fn handle_redis(
+        stream: &mut DuplexStream,
+        state: &State<EventChannelState>,
+        user_id: &Arc<str>,
+        sender: &Sender<Arc<str>>,
+        event: Arc<str>,
+    ) {
+        let msg = ServerMessage::Received(ReceivedMessage {
+            event_name: (*event).to_owned(),
+        });
+
+        stream
+            .send(serde_json::to_string(&msg).unwrap().into())
+            .await
+            .unwrap();
+    }
 
     ws.channel(move |mut stream| {
         Box::pin(async move {
-            let mut _receiver = receiver;
+            let mut receiver = receiver;
             loop {
-                let msg = match stream.next().await {
-                    Some(m) => m?, // This will return an error from the Async block which will skip unsubbing from state.
-                    None => break,
-                };
-
-                if !msg.is_text() {
-                    continue;
-                }
-
-                let txt = msg.to_text().unwrap();
-
-                if txt == "/debug" {
-                    let dbg_msg = format!("{:#?}", &state);
-                    eprintln!("{dbg_msg}");
-                    stream.send(dbg_msg.into()).await.unwrap();
-                    continue;
-                }
-
-                let message = match serde_json::from_str::<ClientMessage>(txt) {
-                    Ok(m) => m,
-                    Err(err) => {
-                        let error = ServerMessage::Error(ErrorMessage {
-                            message: String::from("Invalid Message"),
-                            cause: err.to_string(),
-                        });
-
-                        let error = serde_json::to_string(&error).unwrap();
-
-                        let _ = stream.send(error.into()).await;
-                        continue;
+                tokio::select! {
+                    r = stream.next() => {
+                        let message = match r {
+                            Some(r) => r,
+                            None => break,
+                        };
+                        handle_message(&mut stream, state, &user_id, &sender, message?).await;
+                    },
+                    r = receiver.recv() => {
+                        let message = match r {
+                            Some(m) => m,
+                            None => break,
+                        };
+                        handle_redis(&mut stream, state, &user_id, &sender, message).await;
                     }
-                };
-
-                let subscribe_message = match message {
-                    ClientMessage::Subscribe(msg) => msg,
-                    _ => {
-                        let error = ServerMessage::Error(ErrorMessage {
-                            message: String::from("Message not implemented yet."),
-                            cause: "".into(),
-                        });
-                        let error = serde_json::to_string(&error).unwrap();
-
-                        let _ = stream.send(error.into()).await;
-                        continue;
-                    }
-                };
-
-                let _ = &state
-                    .subscribe(
-                        subscribe_message.event_name.into(),
-                        user_id.clone(),
-                        sender.clone(),
-                    )
-                    .await;
+                }
             }
 
             Ok(())
