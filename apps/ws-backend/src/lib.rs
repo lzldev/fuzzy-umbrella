@@ -79,10 +79,7 @@ impl WSBackendState {
             let mut sub = client.message_rx();
             let _ = client.subscribe("CHAT:GLOBAL").await;
 
-            client.on_message(|m| {
-                dbg!(&m);
-                Ok(())
-            });
+            client.on_message(|m| Ok(()));
 
             let mut manager_subscribe = manager_subscribe;
             let msg_buf = msg_buf_ref;

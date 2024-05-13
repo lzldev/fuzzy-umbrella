@@ -16,7 +16,16 @@ declare module "@tanstack/react-router" {
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      retry: false,
+    },
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");

@@ -1,4 +1,11 @@
-import { Controller, Get, Inject, Param } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Param,
+} from "@nestjs/common";
 import { ProfileService } from "./profile.service";
 import { Public } from "../../auth/public.decorator";
 import {
@@ -33,7 +40,13 @@ export class ProfileController {
 
   @Public()
   @Get("/:id")
-  public userProfile(@Param("id") id: number) {
-    return this.profileService.getUserProfile(id);
+  public async userProfile(@Param("id") id: number) {
+    const user = await this.profileService.getUserProfile(id);
+
+    if (!user) {
+      throw new HttpException("NOT FOUND", HttpStatus.NOT_FOUND);
+    }
+
+    return user;
   }
 }

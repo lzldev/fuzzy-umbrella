@@ -28,7 +28,5 @@ async fn refactor_jwks_test() -> Result<(), anyhow::Error> {
 
     let token = decode_jwt(&test_token, &set)?;
 
-    dbg!(&token);
-
     Ok(())
 }

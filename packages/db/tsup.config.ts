@@ -6,6 +6,7 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   dts: true,
+  external: ["dotenv", "dotenv-cli"],
   format: ["cjs", "esm"],
   clean: true,
 });

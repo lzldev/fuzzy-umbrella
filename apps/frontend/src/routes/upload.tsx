@@ -58,7 +58,7 @@ function FileUploadForm() {
       })
     );
 
-    const awsUpload = await fetch(preparePost.presignedPost.url, {
+    await fetch(preparePost.presignedPost.url, {
       method: "POST",
       body: formData,
     }).then((uploadResponse) => {
@@ -80,7 +80,7 @@ function FileUploadForm() {
         />
         <input ref={fileRef} type="file" name="file" size={200} />
         <button
-          className="bg-fuchsia-500 disabled:bg-fuchsia-300 p-1 rounded-md text-white hover:ring-1 ring-white"
+          className="p-1 text-white rounded-md bg-fuchsia-500 disabled:bg-fuchsia-300 hover:ring-1 ring-white"
           onClick={submit}
         >
           Submit

@@ -17,12 +17,11 @@
   "devDependencies": {
     "drizzle-kit": "^0.20.14",
     "tsup": "^8.0.2",
-    "dotenv-cli": "^7.4.1"
+    "dotenv-cli": "^7.4.1",
+    "dotenv": "^16.4.5"
   },
   "dependencies": {
     "drizzle-orm": "^0.30.8",
-    "@libsql/client": "^0.6.0",
-    "dotenv": "^16.4.5",
-    "zod": "^3.22.4"
+    "@libsql/client": "^0.6.0"
   }
 }

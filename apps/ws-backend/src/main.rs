@@ -27,8 +27,6 @@ async fn launch() -> _ {
             .await
             .expect("To create a jwks state.");
 
-    dbg!(&origins);
-
     let allowed_origins = AllowedOrigins::some_exact(origins.as_slice());
 
     let cors = rocket_cors::CorsOptions {
@@ -142,8 +140,6 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
             let _ = &state
                 .atomic_counter
                 .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
-
-            dbg!("Closing connection");
 
             Ok(())
         })

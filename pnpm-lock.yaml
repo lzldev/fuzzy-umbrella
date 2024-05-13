@@ -168,9 +168,15 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@artspace/schema':
+        specifier: workspace:^
+        version: link:../../packages/artspace-schema
       '@clerk/clerk-react':
         specifier: ^5.0.0
         version: 5.0.0(eslint@9.1.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.3.3)
+      '@tanstack/react-query':
+        specifier: ^5.36.0
+        version: 5.36.0(react@18.2.0)
       '@tanstack/react-router':
         specifier: ^1.26.20
         version: 1.26.20(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -195,10 +201,13 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
+      zustand:
+        specifier: ^4.5.2
+        version: 4.5.2(@types/react@18.2.76)(react@18.2.0)
     devDependencies:
-      '@artspace/schema':
-        specifier: workspace:^
-        version: link:../../packages/artspace-schema
       '@types/react':
         specifier: ^18.2.66
         version: 18.2.76
@@ -228,9 +237,6 @@ importers:
 
   packages/artspace-schema:
     dependencies:
-      drizzle-zod:
-        specifier: ^0.5.1
-        version: 0.5.1(drizzle-orm@0.30.8(@libsql/client@0.6.0)(@types/react@18.2.79)(react@18.2.0))(zod@3.22.4)
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -238,6 +244,9 @@ importers:
       '@artspace/db':
         specifier: workspace:^
         version: link:../db
+      drizzle-zod:
+        specifier: ^0.5.1
+        version: 0.5.1(drizzle-orm@0.30.8(@libsql/client@0.6.0)(@types/react@18.2.79)(react@18.2.0))(zod@3.22.4)
       tsup:
         specifier: ^8.0.2
         version: 8.0.2(postcss@8.4.38)(ts-node@10.9.2(typescript@5.4.5))(typescript@5.4.5)
@@ -253,16 +262,13 @@ importers:
       '@libsql/client':
         specifier: ^0.6.0
         version: 0.6.0
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.5
       drizzle-orm:
         specifier: ^0.30.8
         version: 0.30.8(@libsql/client@0.6.0)(@types/react@18.2.79)(react@18.2.0)
-      zod:
-        specifier: ^3.22.4
-        version: 3.22.4
     devDependencies:
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
       dotenv-cli:
         specifier: ^7.4.1
         version: 7.4.1
@@ -2004,6 +2010,14 @@ packages:
   '@tanstack/history@1.26.10':
     resolution: {integrity: sha512-fHx8RQ3liEDhueIemUggBGmqYnK6vOxtxCduolW7r6ExBEQVwKdLEcaUobxp6BxcXLQ7z/qhXAptlOlYi4FFXg==}
     engines: {node: '>=12'}
+
+  '@tanstack/query-core@5.36.0':
+    resolution: {integrity: sha512-B5BD3pg/mztDR36i77hGcyySKKeYrbM5mnogOROTBi1SUml5ByRK7PGUUl16vvubvQC+mSnqziFG/VIy/DE3FQ==}
+
+  '@tanstack/react-query@5.36.0':
+    resolution: {integrity: sha512-BATvtM0rohwg7pRHUnxgeDiwLWRGZ8OM/4y8LImHVpecQWoH6Uhytu3Z8YV6V7hQ1sMQBFcUrGE1/e4MxR6YiA==}
+    peerDependencies:
+      react: ^18.0.0
 
   '@tanstack/react-router@1.26.20':
     resolution: {integrity: sha512-gsZvv7VFRDRV2/A6K4hI92p10c5P8t96m5w44R1DVGRu4j9ANVDoDme1TDXHAgZGkuSalu7/MMdem5+cYsRnXA==}
@@ -6441,6 +6455,21 @@ packages:
   zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
+  zustand@4.5.2:
+    resolution: {integrity: sha512-2cN1tPkDVkwCy5ickKrI7vijSjPksFRfqS6237NzT0vqSsztTNnQdHw9mmN7uBdk3gceVXU0a+21jFzFzAc9+g==}
+    engines: {node: '>=12.7.0'}
+    peerDependencies:
+      '@types/react': '>=16.8'
+      immer: '>=9.0.6'
+      react: '>=16.8'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+
 snapshots:
 
   '@aashutoshrathi/word-wrap@1.2.6': {}
@@ -8701,6 +8730,13 @@ snapshots:
       tslib: 2.6.2
 
   '@tanstack/history@1.26.10': {}
+
+  '@tanstack/query-core@5.36.0': {}
+
+  '@tanstack/react-query@5.36.0(react@18.2.0)':
+    dependencies:
+      '@tanstack/query-core': 5.36.0
+      react: 18.2.0
 
   '@tanstack/react-router@1.26.20(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
@@ -14252,3 +14288,10 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   zod@3.22.4: {}
+
+  zustand@4.5.2(@types/react@18.2.76)(react@18.2.0):
+    dependencies:
+      use-sync-external-store: 1.2.0(react@18.2.0)
+    optionalDependencies:
+      '@types/react': 18.2.76
+      react: 18.2.0
