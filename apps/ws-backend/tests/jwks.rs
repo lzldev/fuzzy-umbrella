@@ -26,7 +26,7 @@ async fn refactor_jwks_test() -> Result<(), anyhow::Error> {
     }))
     .expect("JWKSet To be parsed");
 
-    let token = decode_jwt(&test_token, &set)?;
+    let _token = decode_jwt(&test_token, &set)?;
 
     Ok(())
 }

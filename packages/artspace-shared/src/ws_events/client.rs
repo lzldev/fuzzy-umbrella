@@ -4,13 +4,13 @@ use ts_rs::TS;
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub enum ClientEvent {
-    Subscribe(SubscribeEvent),
+pub enum ClientMessage {
+    Subscribe(SubscribeMessage),
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub struct SubscribeEvent {
+pub struct SubscribeMessage {
     event_name: String,
 }

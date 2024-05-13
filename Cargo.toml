@@ -18,6 +18,9 @@ structmap-derive = { version = "0.1.6" }
 #DB
 libsql = { version = "0.3.3" }
 
+#Logging
+tracing = { version = "0.1.40" }
+tracing-subscriber = { version = "0.3.18" }
 #Async
 tokio = { version = "1", features = ["macros"] }
 rayon = { version = "1.10.0" }

@@ -4,14 +4,14 @@ use ts_rs::TS;
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub enum ServerEvent {
-    Received(ReceivedEvent),
+pub enum ServerMessage {
+    Received(ReceivedMessage),
     Close,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
-pub struct ReceivedEvent {
+pub struct ReceivedMessage {
     event_name: String,
 }

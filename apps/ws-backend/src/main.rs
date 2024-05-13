@@ -18,6 +18,9 @@ use ws_backend::{
 async fn launch() -> _ {
     let env = ws_backend::env::WSBackendEnv::load_env();
 
+    let subscriber = tracing_subscriber::FmtSubscriber::new();
+    tracing::subscriber::set_global_default(subscriber).unwrap();
+
     let origins = env
         .get_env_var(WSBackendEnvVars::CORSOrigins)
         .split(",")
@@ -53,7 +56,7 @@ async fn launch() -> _ {
             routes![ws_backend::auth::unauthorized_get, ping_get, chat_channel,],
         );
 
-    let rocket = api::events::register(rocket);
+    let rocket = api::events::register(rocket).await;
 
     rocket
 }
