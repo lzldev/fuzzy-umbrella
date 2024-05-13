@@ -2,6 +2,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Create a new router instance
 const router = createRouter({ routeTree, context: { auth: undefined! } });
@@ -15,15 +16,19 @@ declare module "@tanstack/react-router" {
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
+const queryClient = new QueryClient();
+
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }
 
 function App() {
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <AppRouter />
-    </ClerkProvider>
+    <QueryClientProvider client={queryClient}>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+        <AppRouter />
+      </ClerkProvider>
+    </QueryClientProvider>
   );
 }
 

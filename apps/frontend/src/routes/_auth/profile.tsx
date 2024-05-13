@@ -19,7 +19,7 @@ function Profile() {
   return (
     <div>
       <button
-        className="bg-fuchsia-500 p-2 rounded-md text-white kjj"
+        className="p-2 text-white rounded-md bg-fuchsia-500 kjj"
         onClick={async () => {
           const req = await ofetch("http://localhost:8000/ws/ping/clerk", {
             method: "GET",
@@ -34,7 +34,7 @@ function Profile() {
         clerk
       </button>
       <button
-        className="bg-fuchsia-500 p-2 rounded-md text-white kjj"
+        className="p-2 text-white rounded-md bg-fuchsia-500 kjj"
         onClick={async () => {
           const req = await ofetch("http://localhost:8000/ws/ping", {
             method: "GET",
@@ -49,12 +49,12 @@ function Profile() {
         Test
       </button>
       <Link to="/upload">
-        <button className="bg-fuchsia-500 p-2 rounded-md text-white kjj">
+        <button className="p-2 text-white rounded-md bg-fuchsia-500 kjj">
           upload
         </button>
       </Link>
       <button
-        className="bg-fuchsia-500 p-2 rounded-md text-white kjj"
+        className="p-2 text-white rounded-md bg-fuchsia-500 kjj"
         onClick={async () => {
           const res = await ofetch<{
             id: number;
@@ -79,10 +79,10 @@ function Profile() {
       <div className="flex gap-2">
         {posts?.map((post) => {
           return (
-            <div className="flex flex-col bg-neutral-200 p-2 gap-y-2">
+            <div className="flex flex-col p-2 bg-neutral-200 gap-y-2">
               <div>{post.content}</div>
               <img
-                className="object-contain object-center flex w-full h-full bg-neutral-800"
+                className="flex object-contain object-center w-full h-full bg-neutral-800"
                 src={`http://d3cbnixg2yv7o.cloudfront.net/${post.id}_thumb_small.jpeg`}
               />
             </div>
