@@ -15,8 +15,8 @@ import { Route as UploadImport } from './routes/upload'
 import { Route as TestImport } from './routes/test'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
-import { Route as AuthWsImport } from './routes/_auth/ws'
 import { Route as AuthProfileImport } from './routes/_auth/profile'
+import { Route as AuthChatImport } from './routes/_auth/chat'
 
 // Create/Update Routes
 
@@ -40,13 +40,13 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthWsRoute = AuthWsImport.update({
-  path: '/ws',
+const AuthProfileRoute = AuthProfileImport.update({
+  path: '/profile',
   getParentRoute: () => AuthRoute,
 } as any)
 
-const AuthProfileRoute = AuthProfileImport.update({
-  path: '/profile',
+const AuthChatRoute = AuthChatImport.update({
+  path: '/chat',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -70,12 +70,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadImport
       parentRoute: typeof rootRoute
     }
-    '/_auth/profile': {
-      preLoaderRoute: typeof AuthProfileImport
+    '/_auth/chat': {
+      preLoaderRoute: typeof AuthChatImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/ws': {
-      preLoaderRoute: typeof AuthWsImport
+    '/_auth/profile': {
+      preLoaderRoute: typeof AuthProfileImport
       parentRoute: typeof AuthImport
     }
   }
@@ -85,7 +85,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
-  AuthRoute.addChildren([AuthProfileRoute, AuthWsRoute]),
+  AuthRoute.addChildren([AuthChatRoute, AuthProfileRoute]),
   TestRoute,
   UploadRoute,
 ])

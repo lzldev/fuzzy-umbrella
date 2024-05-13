@@ -74,13 +74,15 @@ fn echo_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
 
             let _ = {
                 let msg_buf = state.msg_buf.read().await;
-                let mut old = msg_buf.range(
-                    ..if msg_buf.len() < 50 {
-                        msg_buf.len()
-                    } else {
-                        50
-                    },
-                );
+                let mut old = msg_buf
+                    .range(
+                        ..if msg_buf.len() < 50 {
+                            msg_buf.len()
+                        } else {
+                            50
+                        },
+                    )
+                    .rev();
 
                 while let Some(msg) = old.next() {
                     let _ = stream.send(msg.content.as_str().into()).await?;
@@ -92,48 +94,56 @@ fn echo_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
 
             loop {
                 tokio::select! {
-                    msg = receiver.recv() => {
+                   msg = receiver.recv() => {
                         let msg = msg.expect("To unwrap channel message");
                         let _ = stream.send(msg.content.as_str().into()).await;
                     },
                     _ = interval.tick() => {
-                            sender.send(
-                               ChatMessage {
-                                    user_id:0,
-                                    content:String::from("[SERVER] Hii from Server :3 ")
-                               }
-                            ).unwrap();
+                            // sender.send(
+                            //    ChatMessage {
+                            //         user_id:0,
+                            //         content:String::from("[SERVER] Hii from Server :3 ")
+                            //    }
+                            // ).unwrap();
                     },
-                    Some(msg) = stream.next() => {
-                        match msg {
-                            Ok(message) => {
-                                if message.is_text() && message.to_text().unwrap() == "what_count" {
-                                    let v = &state
-                                        .atomic_counter
-                                        .load(std::sync::atomic::Ordering::Relaxed);
-                                    let _ = stream.send(format!("[DEBUG] Connections: {v}").into()).await;
-                                    continue;
-                                }
+                    msg = stream.next() => {
 
-                                if !message.is_text(){
-                                    continue;
-                                }
+                        let message = match msg {
+                            Some(Ok(msg)) => msg,
+                            Some(Err(_)) => break,
+                            None => break
+                        };
 
-                                let txt : &str = message.to_text().unwrap();
-                                sender.send(ChatMessage {
-                                    content:format!("[{}] {}",n,txt).to_owned(),
-                                    user_id:n.clone(),
-                                }).unwrap();
-                            },
-                            Err(_) => break,
+                        if !message.is_text(){
+                            continue;
                         }
-                    },
+
+                        let txt = message.to_text().unwrap();
+
+                        if txt == "what_count" {
+                            let v = &state
+                                .atomic_counter
+                                .load(std::sync::atomic::Ordering::Relaxed);
+                            let v = v.clone() -1 ;
+                            let _ = stream.send(format!("[DEBUG] Connections: {v}").into()).await;
+                            continue;
+                        }
+
+                        let txt : &str = message.to_text().unwrap();
+                        sender.send(ChatMessage {
+                            content:format!("[{}] {}",n,txt).to_owned(),
+                            user_id:n.clone() as usize,
+                        }).unwrap();
+                    }
                 }
             }
 
             let _ = &state
                 .atomic_counter
                 .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
+
+            dbg!("Closing connection");
+
             Ok(())
         })
     })

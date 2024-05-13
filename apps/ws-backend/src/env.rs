@@ -5,6 +5,7 @@ use strum::EnumIter;
 pub enum WSBackendEnvVars {
     CORSOrigins,
     ClerkJWKSUrl,
+    RedisUrl,
 }
 
 impl EnvEnum for WSBackendEnvVars {
@@ -12,6 +13,7 @@ impl EnvEnum for WSBackendEnvVars {
         match var {
             WSBackendEnvVars::CORSOrigins => "WS_CORS_ORIGINS",
             WSBackendEnvVars::ClerkJWKSUrl => "CLERK_JWKS_URL",
+            WSBackendEnvVars::RedisUrl => "REDIS_URL",
         }
     }
 }

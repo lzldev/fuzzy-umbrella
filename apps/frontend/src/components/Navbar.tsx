@@ -19,8 +19,8 @@ export function Navbar() {
           <Link className="hover:underline" to="/upload">
             post
           </Link>
-          <Link className="hover:underline" to="/ws">
-            ws
+          <Link className="hover:underline" to="/chat">
+            chat
           </Link>
           <Link className="hover:underline" to="/profile">
             profile

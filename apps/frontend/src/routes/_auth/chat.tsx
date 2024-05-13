@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const Route = createFileRoute("/_auth/ws")({
+export const Route = createFileRoute("/_auth/chat")({
   component: WS,
 });
 
@@ -28,7 +28,9 @@ function WS() {
       return;
     }
 
-    const ws = new WebSocket("ws://localhost:8000/ws/echo");
+    const ws = new WebSocket(
+      `ws://${window.location.hostname === "localhost" ? "localhost:8000" : window.location.hostname}/ws/echo`
+    );
 
     ws.addEventListener("open", (event) => {
       console.info("open", event);

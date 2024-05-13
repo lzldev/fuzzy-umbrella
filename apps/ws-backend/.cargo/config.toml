@@ -1,4 +1,5 @@
 
 [env]
-WS_CORS_ORIGINS = "http://localhost:3000,http://localhost:5173"                         # dev origins
-CLERK_JWKS_URL = "https://driving-labrador-88.clerk.accounts.dev/.well-known/jwks.json"
+WS_CORS_ORIGINS = "http://localhost:3000,http://localhost:5173,http://localhost:8080,http://15.229.190.52,http://dev.bocchi.pink" # DEV origins
+CLERK_JWKS_URL = "https://driving-labrador-88.clerk.accounts.dev/.well-known/jwks.json"                                           #TODO: Remove in the future
+REDIS_URL = "redis://0.0.0.0:6379"

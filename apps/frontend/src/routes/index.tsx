@@ -12,8 +12,8 @@ function Index() {
   const [count, setCount] = useState(0);
   return (
     <FlexContainer>
-      <div className="gap-8 flex flex-col items-center">
-        <div className="w-full max-w-screen-xl flex justify-center">
+      <div className="flex flex-col items-center gap-8">
+        <div className="flex justify-center w-full max-w-screen-xl">
           <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
             <img src={viteLogo} className="size-40" alt="Vite logo" />
           </a>
@@ -22,10 +22,10 @@ function Index() {
           </a>
         </div>
         <h1>Vite + React</h1>
-        <div className="flex-col flex items-center gap-4">
+        <div className="flex flex-col items-center gap-4">
           <button
             type="button"
-            className="ring-2 ring-black rounded-md background-white px-4 py-2 text-black"
+            className="px-4 py-2 text-black rounded-md ring-2 ring-black background-white"
             onClick={() => setCount((count) => count + 1)}
           >
             count is {count}

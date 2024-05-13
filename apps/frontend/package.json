@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e ../../.env -- vite",
+    "dev": "dotenv -e ../../.env -- vite --host",
     "preview": "dotenv -e ../../.env -- vite preview",
     "build": "tsc && vite build",
     "build:unsafe": "vite build"
