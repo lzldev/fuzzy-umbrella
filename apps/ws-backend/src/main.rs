@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate rocket;
 
+mod api;
+
 use artspace_core::env::EnvContainer;
 use rocket::{http::Method, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
@@ -41,15 +43,19 @@ async fn launch() -> _ {
 
     let state = WSBackendState::create().await;
 
-    rocket::build()
+    let rocket = rocket::build()
         .manage::<WSBackendJWKS>(jwks_state)
         .manage::<WSBackendState>(state)
         .attach(ClerkFairing {})
         .attach(cors)
         .mount(
             "/ws",
-            routes![ws_backend::auth::unauthorized_get, ping_get, chat_channel],
-        )
+            routes![ws_backend::auth::unauthorized_get, ping_get, chat_channel,],
+        );
+
+    let rocket = api::events::register(rocket);
+
+    rocket
 }
 
 #[get("/ping")]
@@ -97,14 +103,6 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
                         let msg = msg.expect("To unwrap channel message");
                         let _ = stream.send(msg.content.as_str().into()).await;
                     },
-                    _ = interval.tick() => {
-                            // sender.send(
-                            //    ChatMessage {
-                            //         user_id:0,
-                            //         content:String::from("[SERVER] Hii from Server :3 ")
-                            //    }
-                            // ).unwrap();
-                    },
                     msg = stream.next() => {
 
                         let message = match msg {
@@ -119,7 +117,7 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
 
                         let txt = message.to_text().unwrap();
 
-                        if txt == "what_count" {
+                        if txt == "/connections" {
                             let v = &state
                                 .atomic_counter
                                 .load(std::sync::atomic::Ordering::Relaxed);

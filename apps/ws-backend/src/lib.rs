@@ -79,8 +79,6 @@ impl WSBackendState {
             let mut sub = client.message_rx();
             let _ = client.subscribe("CHAT:GLOBAL").await;
 
-            client.on_message(|m| Ok(()));
-
             let mut manager_subscribe = manager_subscribe;
             let msg_buf = msg_buf_ref;
 
@@ -91,28 +89,41 @@ impl WSBackendState {
 
                 sender2
                     .send(ChatMessage {
-                        user_id: 0,
+                        user_id: usize::MAX,
                         content: format!("[GLOBAL]  {}", msg),
                     })
                     .unwrap();
             };
 
+            async fn handle_message(
+                msg_buf: &Arc<RwLock<VecDeque<ChatMessage>>>,
+                msg: Result<ChatMessage, broadcast::error::RecvError>,
+            ) -> Option<()> {
+                let msg = msg.unwrap();
+                let mut msg_buf = msg_buf.deref().write().await;
+
+                if msg_buf.front().is_some_and(|f| f.user_id == 0) {
+                    dbg!("wa");
+                    return None;
+                }
+
+                msg_buf.push_front(msg);
+                let cap = msg_buf.capacity() / 4;
+                let len = msg_buf.len();
+                if len < cap {
+                    return None;
+                }
+
+                msg_buf.truncate(cap);
+
+                Some(())
+            }
             loop {
                 tokio::select! {
                         redis_msg = sub.recv() => redis_handler(redis_msg).await,
-                        manager_message = manager_subscribe.recv() => {
-
-                        let msg = manager_message.unwrap();
-                        let mut msg_buf = msg_buf.deref().write().await;
-                        msg_buf.push_front(msg);
-                        let cap = msg_buf.capacity() / 4;
-                        let len = msg_buf.len();
-                        if len < cap {
-                            continue;
+                        manager_message = manager_subscribe.recv() => match handle_message(&msg_buf,manager_message).await {
+                            _ => { continue }
                         }
-
-                        msg_buf.truncate(cap);
-                    }
                 };
             }
 
