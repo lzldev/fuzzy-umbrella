@@ -102,8 +102,9 @@ impl WSBackendState {
                 let msg = msg.unwrap();
                 let mut msg_buf = msg_buf.deref().write().await;
 
+                //TODO:Remove this.
                 if msg_buf.front().is_some_and(|f| f.user_id == 0) {
-                    dbg!("wa");
+                    // Server is repeating messages ignore....
                     return None;
                 }
 

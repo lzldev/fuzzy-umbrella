@@ -18,7 +18,6 @@ function WS() {
   const [isConnected, setIsConnected] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [showGoBack, setShowGoBack] = useState(false);
-
   const [messages, setMessages] = useState<Message[]>([]);
 
   const wsConnect = useCallback(() => {

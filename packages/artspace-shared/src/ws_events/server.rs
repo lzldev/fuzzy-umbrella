@@ -6,6 +6,7 @@ use ts_rs::TS;
 #[ts(export)]
 pub enum ServerMessage {
     Received(ReceivedMessage),
+    Error(ErrorMessage),
     Close,
 }
 
@@ -13,5 +14,13 @@ pub enum ServerMessage {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReceivedMessage {
-    event_name: String,
+    pub event_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ErrorMessage {
+    pub message: String,
+    pub cause: String,
 }

@@ -14,6 +14,11 @@ export function Navbar() {
           Mediathing
         </Link>
       </div>
+      <div>
+        <Link className="hover:underline" to="/ws">
+          ws-test
+        </Link>
+      </div>
       <div className="flex items-center justify-center gap-2">
         <SignedIn>
           <Link className="hover:underline" to="/upload">

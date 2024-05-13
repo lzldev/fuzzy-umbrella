@@ -12,5 +12,5 @@ pub enum ClientMessage {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SubscribeMessage {
-    event_name: String,
+    pub event_name: String,
 }

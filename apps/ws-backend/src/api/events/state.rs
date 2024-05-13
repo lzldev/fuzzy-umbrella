@@ -3,22 +3,25 @@ use std::{
     sync::Arc,
 };
 
-use artspace_shared::client::ClientMessage;
 use fred::{
     clients::RedisClient,
-    interfaces::{ClientLike, EventInterface},
+    interfaces::{ClientLike, EventInterface, PubsubInterface},
     types::RedisConfig,
 };
-use rocket::{Build, Rocket, State};
-use tokio::task::JoinHandle;
-use ws_backend::auth::ClerkUser;
+use tokio::{
+    sync::{mpsc, RwLock},
+    task::JoinHandle,
+};
 
-use super::{user_subscription::UserSubscription, UserChannelSender};
+use super::{
+    redis_channel::RedisChannelCommands, user_subscription::UserSubscription, UserChannelSender,
+};
 
 #[derive(Debug)]
 pub struct EventChannelState {
-    _redis_task_handle: JoinHandle<()>,
-    pub subscriptions: HashMap<Arc<str>, HashSet<UserSubscription>>,
+    _manager_task_handle: JoinHandle<()>,
+    manager_sender: mpsc::Sender<RedisChannelCommands>,
+    pub subscriptions: Arc<RwLock<HashMap<Arc<str>, HashSet<UserSubscription>>>>,
 }
 
 impl EventChannelState {
@@ -33,27 +36,100 @@ impl EventChannelState {
             None,
         );
 
-        redis_client.init().await.expect("To connect to redis");
+        let subscriptions = Arc::new(RwLock::new(HashMap::new()));
+        let subscriptions_handle = subscriptions.clone();
 
-        let redis_task_handle = tokio::spawn(async move {
+        redis_client.init().await.expect("To connect to redis");
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<RedisChannelCommands>(5);
+
+        let manager_task = tokio::spawn(async move {
+            let subscriptions = subscriptions_handle;
             let redis_client = redis_client;
-            let mut msg_channel = redis_client.message_rx();
-            let _ = msg_channel.recv().await; // TODO:Implement
+            let mut redis_channel = redis_client.message_rx();
+
+            let handle_redis = |message: fred::types::Message| async {
+                dbg!(message);
+            };
+
+            let handle_channel = |command: RedisChannelCommands| async {
+                match command {
+                    RedisChannelCommands::Sub(evt) => {
+                        redis_client
+                            .subscribe((*evt).to_owned())
+                            .await
+                            .expect("To subscribe to redis event");
+                    }
+                    RedisChannelCommands::Unsub(evt) => {
+                        redis_client
+                            .unsubscribe((*evt).to_owned())
+                            .await
+                            .expect("To unsubscribe to redis event");
+                    }
+                }
+            };
+
+            loop {
+                tokio::select! {
+                    Some(msg) = rx.recv() => handle_channel(msg).await,
+                    Ok(redis_msg) = redis_channel.recv() => handle_redis(redis_msg).await,
+                };
+            }
         });
 
         Self {
-            _redis_task_handle: redis_task_handle,
-            subscriptions: HashMap::new(),
+            _manager_task_handle: manager_task,
+            manager_sender: tx,
+            subscriptions,
         }
     }
 
-    pub fn subscribe(&mut self, event: Arc<str>, user: Arc<str>, sender: UserChannelSender) {
-        if self.subscriptions.contains_key(&event) {
-            let subs = self.subscriptions.get_mut(&event).unwrap();
+    pub async fn subscribe(&self, event: Arc<str>, user: Arc<str>, sender: UserChannelSender) {
+        let mut map = self.subscriptions.write().await;
+
+        if map.contains_key(&event) {
+            let subs = map.get_mut(&event).unwrap();
             subs.insert(UserSubscription { user, sender });
-        } else {
-            self.subscriptions
-                .insert(event, HashSet::from([UserSubscription { user, sender }]));
+            return;
         }
+
+        map.insert(
+            event.clone(),
+            HashSet::from([UserSubscription { user, sender }]),
+        );
+
+        drop(map);
+
+        self.manager_sender
+            .send(RedisChannelCommands::Sub(event))
+            .await
+            .expect("To send message to channel");
     }
+
+    #[allow(dead_code, unused_variables)]
+    pub fn unsubscribe(&mut self, event: Arc<str>, user: Arc<str>) {}
+
+    #[allow(dead_code, unused_variables)]
+    pub fn drop_user(&mut self, user: Arc<str>) {}
 }
+
+/***
+ * Unsub users should kill every subscription from user
+ *
+ * When unsubing someone from an event:
+ *      Check if event is empty.
+*           if so -> stop subing for it in redis task.
+*
+
+For achieving both i should:
+    keep a user -> Vec<Events> (could be a hashset)
+        for a faster user_drop
+
+
+Dropping:
+    Iterate through user subscribed events:
+        For every event remove user subscription from set:
+            problem:
+                since im removing from a set.
+                    i have to create a new UserSubscription matching the
+                    user's hash to drop it ?
+ */

@@ -9,3 +9,4 @@ export * from './ClientMessage.ts';
 export * from './SubscribeMessage.ts';
 export * from './ServerMessage.ts';
 export * from './ReceivedMessage.ts';
+export * from './ErrorMessage.ts';
