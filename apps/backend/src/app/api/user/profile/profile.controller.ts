@@ -8,6 +8,7 @@ import {
 } from "../../auth/clerk/clerk.decorator";
 import { ClerkService } from "../../auth/clerk/clerk.service";
 import { User } from "@clerk/clerk-sdk-node";
+import { Profile } from "artspace-schema";
 
 @Controller("profile")
 export class ProfileController {
@@ -26,9 +27,8 @@ export class ProfileController {
     console.log("private_metadata", user);
 
     const userId = await this.clerkService.getUserIdFromClerkID(clerkUserId);
-    const profile = await this.profileService.getUserProfile(userId);
 
-    return profile;
+    return await this.profileService.getUserProfile(userId);
   }
 
   @Public()

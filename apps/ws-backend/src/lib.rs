@@ -41,6 +41,7 @@ pub struct WSBackendState {
     pub receiver: Arc<broadcast::Receiver<ChatMessage>>,
 }
 
+
 impl WSBackendState {
     pub async fn create() -> Self {
         let (sender, receiver) = tokio::sync::broadcast::channel(10);

@@ -8,9 +8,13 @@
     "build": "tsup"
   },
   "devDependencies": {
+    "@artspace/db": "workspace:^",
     "tsup": "^8.0.2"
   },
   "peerDependencies": {
     "zod": "^3.22.4"
+  },
+  "dependencies": {
+    "drizzle-zod": "^0.5.1"
   }
 }

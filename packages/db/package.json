@@ -1,9 +1,9 @@
 {
   "name": "@artspace/db",
   "version": "1.0.0",
+  "type": "module",
   "main": "./dist/index.cjs",
   "types": "./src/index.ts",
-  "type": "module",
   "exports": {
     "import": "./dist/index.js",
     "require": "./dist/index.cjs"
