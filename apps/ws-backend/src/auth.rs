@@ -1,7 +1,9 @@
+use anyhow::anyhow;
 use jsonwebtoken::{jwk::JwkSet, TokenData};
 use rocket::{
     fairing::{Fairing, Info},
     http::{uri::Origin, Status},
+    request::{self, FromRequest},
     Data, Request,
 };
 
@@ -74,5 +76,34 @@ impl Fairing for ClerkFairing {
         request
             .local_cache_async(async { Ok::<TokenData<Claims>, anyhow::Error>(token) })
             .await;
+    }
+}
+
+#[derive(Debug)]
+pub struct ClerkUser<'r> {
+    pub token: &'r TokenData<Claims>,
+}
+
+#[allow(unused_variables, dead_code)]
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for ClerkUser<'r> {
+    type Error = anyhow::Error;
+
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        let token = request
+            .local_cache_async(async {
+                return Err::<TokenData<Claims>, anyhow::Error>(anyhow!(
+                    "Trid using the cached session in a public route."
+                ));
+            })
+            .await;
+
+        if let Err(err) = token {
+            return request::Outcome::Error((Status::Unauthorized, anyhow!(Status::Unauthorized)));
+        }
+
+        let token = token.as_ref().unwrap();
+
+        request::Outcome::Success(Self { token })
     }
 }

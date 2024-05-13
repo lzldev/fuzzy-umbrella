@@ -10,13 +10,24 @@ import {
 } from "@nestjs/common";
 import { ClerkClient, ClerkClientProvider } from "./clerk.client";
 import { Observable } from "rxjs";
-import { User } from "@clerk/clerk-sdk-node";
+import { Session, User } from "@clerk/clerk-sdk-node";
 
 export const REQ_CLERK_SESSION_ID_KEY = "clerk_session_id";
 export const REQ_CLERK_USER_ID_KEY = "clerk_user_id";
 
 const REQ_CLERK_SESSION_KEY = "clerk_session";
 const REQ_CLERK_USER_KEY = "clerk_user";
+
+declare global {
+  namespace Express {
+    export interface Request {
+      clerk_session_id: string;
+      clerk_user_id: string;
+      clerk_session: Session;
+      clerk_user: User;
+    }
+  }
+}
 
 export const ClerkSessionID = createParamDecorator<string>(
   (_: unknown, context: ExecutionContext) => {

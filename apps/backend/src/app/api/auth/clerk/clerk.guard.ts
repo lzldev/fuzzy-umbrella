@@ -40,7 +40,7 @@ export class ClerkGuard implements CanActivate {
 
     if (isPublic) return true;
 
-    const req = context.switchToHttp().getRequest<Request>();
+    const req = context.switchToHttp().getRequest<Request<{ jadas: true }>>();
     const token = req.cookies["__session"];
 
     if (!token) {

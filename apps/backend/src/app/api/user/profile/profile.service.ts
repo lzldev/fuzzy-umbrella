@@ -1,6 +1,6 @@
 import { users } from "@artspace/db";
 import { Injectable } from "@nestjs/common";
-import { Profile } from "artspace-schema";
+import { Profile } from "@artspace/schema";
 import { eq } from "drizzle-orm";
 import { Database, DatabaseProvider } from "~/app/database/database.provider";
 

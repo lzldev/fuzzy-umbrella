@@ -8,7 +8,7 @@ import {
 } from "../../auth/clerk/clerk.decorator";
 import { ClerkService } from "../../auth/clerk/clerk.service";
 import { User } from "@clerk/clerk-sdk-node";
-import { Profile } from "artspace-schema";
+import { Profile } from "@artspace/schema";
 
 @Controller("profile")
 export class ProfileController {

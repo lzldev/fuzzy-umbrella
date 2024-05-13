@@ -51,7 +51,8 @@ export class EnvProvider {
       if (!process.env[env]) {
         throw new Error(`MISSING ENV VARIABLE: ${env}`);
       }
-      this[field] = process.env[env];
+
+      this[field] = process.env[env]!;
     }
 
     for (const [env, field] of Object.entries(optionalFields)) {
@@ -59,7 +60,8 @@ export class EnvProvider {
         this[field.key] = field.defaultValue;
         continue;
       }
-      this[field.key] = process.env[env];
+
+      this[field.key] = process.env[env]!;
     }
   }
 }

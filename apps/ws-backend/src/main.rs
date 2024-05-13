@@ -6,7 +6,7 @@ use rocket::{http::Method, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 use tokio::time::Duration;
 use ws_backend::{
-    auth::{ClerkFairing, WSBackendJWKS},
+    auth::{ClerkFairing, ClerkUser, WSBackendJWKS},
     data::ChatMessage,
     env::WSBackendEnvVars,
     WSBackendState,
@@ -50,17 +50,18 @@ async fn launch() -> _ {
         .attach(cors)
         .mount(
             "/ws",
-            routes![ws_backend::auth::unauthorized_get, ping_get, echo_channel],
+            routes![ws_backend::auth::unauthorized_get, ping_get, chat_channel],
         )
 }
 
 #[get("/ping")]
-fn ping_get() -> &'static str {
+fn ping_get(user: ClerkUser<'_>) -> &'static str {
+    dbg!(user);
     "Pong"
 }
 
-#[get("/echo")]
-fn echo_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rocket_ws::Channel<'_> {
+#[get("/chat")]
+fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rocket_ws::Channel<'_> {
     use rocket::futures::{SinkExt, StreamExt};
 
     ws.channel(move |mut stream| {

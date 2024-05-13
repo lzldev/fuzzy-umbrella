@@ -29,7 +29,7 @@ function WS() {
     }
 
     const ws = new WebSocket(
-      `ws://${window.location.hostname === "localhost" ? "localhost:8000" : window.location.hostname}/ws/echo`
+      `ws://${window.location.hostname === "localhost" ? "localhost:8000" : window.location.hostname}/ws/chat`
     );
 
     ws.addEventListener("open", (event) => {

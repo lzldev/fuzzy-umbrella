@@ -12,7 +12,9 @@
 - Turborepo
 - Pulumi CLI
 - Rust Toolchain
-  - cargo-lambda
+  - Additional:
+    - cargo-lambda: building lambda functions
+    - cargo-watch : for running in dev
 
 ### Service Requirements
 

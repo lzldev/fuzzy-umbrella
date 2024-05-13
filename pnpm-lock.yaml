@@ -26,6 +26,9 @@ importers:
       '@artspace/db':
         specifier: workspace:^
         version: link:../../packages/db
+      '@artspace/schema':
+        specifier: workspace:^
+        version: link:../../packages/artspace-schema
       '@aws-sdk/client-s3':
         specifier: ^3.554.0
         version: 3.554.0
@@ -59,9 +62,6 @@ importers:
       '@nestjs/platform-express':
         specifier: ^10.0.0
         version: 10.3.7(@nestjs/common@10.3.7(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.3.7)
-      artspace-schema:
-        specifier: workspace:^
-        version: link:../../packages/artspace-schema
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -196,6 +196,9 @@ importers:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
     devDependencies:
+      '@artspace/schema':
+        specifier: workspace:^
+        version: link:../../packages/artspace-schema
       '@types/react':
         specifier: ^18.2.66
         version: 18.2.76
@@ -205,9 +208,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.2.1
         version: 4.2.1(vite@5.2.8(@types/node@20.12.7)(terser@5.30.4))
-      artspace-schema:
-        specifier: workspace:^
-        version: link:../../packages/artspace-schema
       artspace-shared:
         specifier: workspace:^
         version: link:../../packages/artspace-shared

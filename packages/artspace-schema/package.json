@@ -1,5 +1,5 @@
 {
-  "name": "artspace-schema",
+  "name": "@artspace/schema",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./src/index.ts",

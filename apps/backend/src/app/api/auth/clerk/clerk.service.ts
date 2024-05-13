@@ -23,16 +23,14 @@ export class ClerkService {
       return parseInt(value);
     }
 
-    const query = await this.database.query.users
-      .findFirst({
-        columns: {
-          id: true,
-        },
-        where: (users) => eq(users.clerk_id, clerkId),
-      })
-      .catch(() => ({ id: null as null }));
+    const query = await this.database.query.users.findFirst({
+      columns: {
+        id: true,
+      },
+      where: (users) => eq(users.clerk_id, clerkId),
+    });
 
-    if (query.id === null) {
+    if (!query) {
       throw HttpErrorByCode[403];
     }
 

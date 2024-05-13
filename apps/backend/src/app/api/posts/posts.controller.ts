@@ -8,7 +8,7 @@ import { ClerkUserID } from "../auth/clerk/clerk.decorator";
 import { users } from "@artspace/db";
 import { eq } from "drizzle-orm";
 import { PreparedPost } from "artspace-shared";
-import { NewPostSchema } from "artspace-schema";
+import { NewPostSchema } from "@artspace/schema";
 import { createPostKey } from "~/app/redis/redis.keys";
 
 @Controller("posts")

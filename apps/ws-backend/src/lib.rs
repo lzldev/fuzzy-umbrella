@@ -6,26 +6,15 @@ pub mod jwt;
 use std::{
     collections::VecDeque,
     ops::Deref,
-    sync::{
-        atomic::{AtomicIsize, AtomicUsize},
-        Arc,
-    },
+    sync::{atomic::AtomicIsize, Arc},
     time::Duration,
 };
 
-use anyhow::anyhow;
 use data::ChatMessage;
 use fred::{
     clients::RedisClient,
     interfaces::{ClientLike, EventInterface, KeysInterface, PubsubInterface},
     types::{Message, RedisConfig},
-};
-use jsonwebtoken::TokenData;
-use jwt::Claims;
-use rocket::{
-    http::Status,
-    request::{self, FromRequest},
-    Request,
 };
 use tokio::{
     sync::{broadcast, RwLock},
@@ -40,7 +29,6 @@ pub struct WSBackendState {
     pub sender: Arc<broadcast::Sender<ChatMessage>>,
     pub receiver: Arc<broadcast::Receiver<ChatMessage>>,
 }
-
 
 impl WSBackendState {
     pub async fn create() -> Self {
@@ -81,7 +69,6 @@ impl WSBackendState {
                         .unwrap();
                 }
             });
-            dbg!("Manager");
             let client = client;
 
             let _: () = client
@@ -99,8 +86,6 @@ impl WSBackendState {
 
             let mut manager_subscribe = manager_subscribe;
             let msg_buf = msg_buf_ref;
-
-            let msg_buf2 = msg_buf.clone();
 
             let redis_handler = |redis_msg: Result<Message, broadcast::error::RecvError>| async {
                 let redis_msg = redis_msg.unwrap();
@@ -145,8 +130,6 @@ impl WSBackendState {
 
             //     msg_buf.truncate(cap);
             // }
-
-            ()
         });
 
         Self {
@@ -156,43 +139,5 @@ impl WSBackendState {
             receiver: Arc::new(receiver),
             atomic_counter: AtomicIsize::new(1),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct ClerkUser<'r> {
-    pub token: &'r TokenData<Claims>,
-}
-
-#[allow(unused_variables, dead_code)]
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for ClerkUser<'r> {
-    type Error = anyhow::Error;
-
-    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let token = request
-            .local_cache_async(async {
-                dbg!("Cache Miss");
-
-                let session_cookie = match request.cookies().get("__session") {
-                    Some(r) => r,
-                    None => {
-                        return Err::<TokenData<Claims>, anyhow::Error>(anyhow!(
-                            "Session not found"
-                        ));
-                    }
-                };
-
-                panic!("Tried restoring Token cache without running ClerkFairing")
-            })
-            .await;
-
-        if let Err(err) = token {
-            return request::Outcome::Error((Status::Unauthorized, anyhow!(Status::Unauthorized)));
-        }
-
-        let token = token.as_ref().unwrap();
-
-        request::Outcome::Success(Self { token })
     }
 }
