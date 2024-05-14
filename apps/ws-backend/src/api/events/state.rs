@@ -132,17 +132,44 @@ impl EventChannelState {
     }
 
     #[allow(dead_code, unused_variables)]
-    pub fn unsubscribe(&self, event: Arc<str>, user: Arc<str>) {}
+    pub async fn unsubscribe(&self, event: EventName, user: UserId) {
+        let mut map = self.subscriptions.write().await;
+        if map.contains_key(&event) {
+            map.remove(&event);
+        }
+        drop(map);
+
+        let mut map = self.user_events.lock().await;
+        let mut user_map = map.get_mut(&user).unwrap();
+        let idx = user_map
+            .binary_search(&event)
+            .expect("To find index in user_map");
+        let _ = user_map.swap_remove(idx);
+        //TODO: Send UNSUB to redis if event is empty
+    }
 
     #[allow(dead_code, unused_variables)]
-    pub fn drop_user(&self, user: Arc<str>) {}
+    pub async fn drop_user(&self, user: UserId) {
+        let mut user_map = self.user_events.lock().await;
+        let user_events = user_map.get(&user).expect("To find user");
+
+        if (user_events.is_empty()) {
+            return;
+        }
+
+        let mut events_map = self.subscriptions.write().await;
+        for event in user_events.iter() {
+            let event_map = events_map.get_mut(event).expect("To get event");
+            event_map.remove(&user).expect("To Remove user from event.");
+        }
+    }
 }
 
 /***
- * Unsub users should kill every subscription from user
- *
- * When unsubing someone from an event:
- *      Check if event is empty.
+* Unsub users should kill every subscription from user
+*
+* When unsubing someone from an event:
+*      Check if event is empty.
 *           if so -> stop subing for it in redis task.
 *
 
