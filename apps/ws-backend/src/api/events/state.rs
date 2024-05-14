@@ -18,13 +18,15 @@ use super::{redis_channel::RedisChannelCommands, UserChannelSender};
 
 type EventName = Arc<str>;
 type UserId = Arc<str>;
+type SubscriptionsMap = HashMap<EventName, HashMap<UserId, UserChannelSender>>;
+type UserSubscriptionsMap = HashMap<UserId, Vec<EventName>>;
 
 #[derive(Debug)]
 pub struct EventChannelState {
-    _manager_task_handle: JoinHandle<()>,
-    manager_sender: mpsc::Sender<RedisChannelCommands>,
-    user_events: Mutex<HashMap<UserId, Vec<EventName>>>, // This can be a Box::pin?
-    subscriptions: Arc<RwLock<HashMap<EventName, HashMap<UserId, UserChannelSender>>>>,
+    _redis_handle: JoinHandle<()>,
+    redis_sender: mpsc::Sender<RedisChannelCommands>,
+    user_events: Mutex<UserSubscriptionsMap>, // This can be a Box::pin?
+    subscriptions: Arc<RwLock<SubscriptionsMap>>,
 }
 
 impl EventChannelState {
@@ -100,8 +102,8 @@ impl EventChannelState {
 
         Self {
             user_events: Mutex::new(HashMap::new()),
-            _manager_task_handle: manager_task,
-            manager_sender: tx,
+            _redis_handle: manager_task,
+            redis_sender: tx,
             subscriptions,
         }
     }
@@ -125,7 +127,7 @@ impl EventChannelState {
         }
         drop(user_map);
 
-        self.manager_sender
+        self.redis_sender
             .send(RedisChannelCommands::Sub(event))
             .await
             .expect("To send message to channel");
@@ -164,25 +166,3 @@ impl EventChannelState {
         }
     }
 }
-
-/***
-* Unsub users should kill every subscription from user
-*
-* When unsubing someone from an event:
-*      Check if event is empty.
-*           if so -> stop subing for it in redis task.
-*
-
-For achieving both i should:
-    keep a user -> Vec<Events> (could be a hashset)
-        for a faster user_drop
-
-
-Dropping:
-    Iterate through user subscribed events:
-        For every event remove user subscription from set:
-            problem:
-                since im removing from a set.
-                    i have to create a new UserSubscription matching the
-                    user's hash to drop it ?
- */
