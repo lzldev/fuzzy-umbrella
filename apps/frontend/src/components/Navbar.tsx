@@ -15,7 +15,7 @@ export function Navbar() {
         </Link>
       </div>
       <div>
-        <Link className="hover:underline" to="/ws">
+        <Link className="hover:underline" to="/sub">
           ws-test
         </Link>
       </div>

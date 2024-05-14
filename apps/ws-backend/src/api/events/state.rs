@@ -23,7 +23,7 @@ type UserId = Arc<str>;
 pub struct EventChannelState {
     _manager_task_handle: JoinHandle<()>,
     manager_sender: mpsc::Sender<RedisChannelCommands>,
-    user_events: Mutex<HashMap<UserId, Vec<EventName>>>,
+    user_events: Mutex<HashMap<UserId, Vec<EventName>>>, // This can be a Box::pin?
     subscriptions: Arc<RwLock<HashMap<EventName, HashMap<UserId, UserChannelSender>>>>,
 }
 
@@ -132,10 +132,10 @@ impl EventChannelState {
     }
 
     #[allow(dead_code, unused_variables)]
-    pub fn unsubscribe(&mut self, event: Arc<str>, user: Arc<str>) {}
+    pub fn unsubscribe(&self, event: Arc<str>, user: Arc<str>) {}
 
     #[allow(dead_code, unused_variables)]
-    pub fn drop_user(&mut self, user: Arc<str>) {}
+    pub fn drop_user(&self, user: Arc<str>) {}
 }
 
 /***

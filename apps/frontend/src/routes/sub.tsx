@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ClientMessage } from "artspace-shared";
 
-export const Route = createFileRoute("/ws")({
+export const Route = createFileRoute("/sub")({
   component: WSComponent,
 });
 
@@ -25,6 +25,7 @@ function WSComponent() {
       console.info("open", event);
       setIsConnected(true);
     });
+
     ws.addEventListener("message", (event) => {
       console.info("message", event);
       console.info("message", event.data);

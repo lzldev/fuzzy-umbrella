@@ -8,13 +8,10 @@ use artspace_shared::{
     client::ClientMessage,
     server::{ErrorMessage, ReceivedMessage, ServerMessage},
 };
-use fred::types::Server;
 use rocket::{Build, Rocket, State};
 use rocket_ws::{stream::DuplexStream, Message};
 use tokio::sync::mpsc::Sender;
 use ws_backend::auth::ClerkUser;
-
-use crate::api::events::user_subscription::UserSubscription;
 
 use self::state::EventChannelState;
 
@@ -42,7 +39,7 @@ fn sub_events<'a>(
         stream: &mut DuplexStream,
         state: &State<EventChannelState>,
         user_id: &Arc<str>,
-        sender: &Sender<Arc<str>>,
+        sender: &UserChannelSender,
         message: Message,
     ) {
         if !message.is_text() {
@@ -97,9 +94,9 @@ fn sub_events<'a>(
 
     async fn handle_redis(
         stream: &mut DuplexStream,
-        state: &State<EventChannelState>,
-        user_id: &Arc<str>,
-        sender: &Sender<Arc<str>>,
+        _state: &State<EventChannelState>,
+        _user_id: &Arc<str>,
+        _sender: &Sender<Arc<str>>,
         event: Arc<str>,
     ) {
         let msg = ServerMessage::Received(ReceivedMessage {
@@ -115,6 +112,7 @@ fn sub_events<'a>(
     ws.channel(move |mut stream| {
         Box::pin(async move {
             let mut receiver = receiver;
+
             loop {
                 tokio::select! {
                     r = stream.next() => {
@@ -122,6 +120,7 @@ fn sub_events<'a>(
                             Some(r) => r,
                             None => break,
                         };
+
                         handle_message(&mut stream, state, &user_id, &sender, message?).await;
                     },
                     r = receiver.recv() => {
@@ -129,6 +128,7 @@ fn sub_events<'a>(
                             Some(m) => m,
                             None => break,
                         };
+
                         handle_redis(&mut stream, state, &user_id, &sender, message).await;
                     }
                 }
