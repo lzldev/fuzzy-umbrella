@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
 
 use fred::{
@@ -6,6 +7,8 @@ use fred::{
     types::RedisConfig,
 };
 
+use crate::api::events::manager_channel::start_manager;
+use crate::api::events::redis_channel::start_redis_task;
 use tokio::{
     sync::{
         mpsc::{self, Sender},
@@ -16,21 +19,25 @@ use tokio::{
 
 use super::{redis_channel::RedisChannelCommands, UserChannelSender};
 
-type EventName = Arc<str>;
-type UserId = Arc<str>;
-type SubscriptionsMap = HashMap<EventName, HashMap<UserId, UserChannelSender>>;
-type UserSubscriptionsMap = HashMap<UserId, Vec<EventName>>;
+pub type EventName = Arc<str>;
+pub type UserId = Arc<str>;
+pub type SubscriptionsMap = HashMap<EventName, HashMap<UserId, UserChannelSender>>;
+pub type UserSubscriptionsMap = HashMap<UserId, Vec<EventName>>;
 
 #[derive(Debug)]
 pub struct EventChannelState {
     _redis_handle: JoinHandle<()>,
+    _manager_handle: JoinHandle<()>,
     redis_sender: mpsc::Sender<RedisChannelCommands>,
     user_events: Mutex<UserSubscriptionsMap>, // This can be a Box::pin?
-    subscriptions: Arc<RwLock<SubscriptionsMap>>,
+    subscriptions: Arc<RwLock<SubscriptionsMap>>, // This lock can be removed by doing | Redis -> Manager
 }
 
 impl EventChannelState {
     pub async fn create() -> Self {
+        let subscriptions = Arc::new(RwLock::new(HashMap::new()));
+        let subscriptions_handle = subscriptions.clone();
+
         let redis_client = RedisClient::new(
             RedisConfig {
                 version: fred::types::RespVersion::RESP3,
@@ -41,70 +48,26 @@ impl EventChannelState {
             None,
         );
 
-        let subscriptions = Arc::new(RwLock::new(HashMap::new()));
-        let subscriptions_handle = subscriptions.clone();
-
         redis_client.init().await.expect("To connect to redis");
-        let (tx, mut rx) = tokio::sync::mpsc::channel::<RedisChannelCommands>(5);
 
-        let manager_task = tokio::spawn(async move {
-            let subscriptions = subscriptions_handle;
-            let redis_client = redis_client;
-            let mut redis_channel = redis_client.message_rx();
+        let (_redis_handle, redis_sender) = start_redis_task(redis_client, subscriptions_handle);
 
-            async fn handle_redis(
-                message: fred::types::Message,
-                subscriptions: &Arc<RwLock<HashMap<Arc<str>, HashMap<Arc<str>, Sender<Arc<str>>>>>>,
-            ) {
-                let channel: Arc<str> = message.channel.to_string().into();
-                let map = subscriptions.write().await;
-                if !map.contains_key(&channel) {
-                    eprintln!("Subscribed event not found in map {:?}", &channel);
-                    return;
-                }
+        let (_manager_handle, manager_sender) =
+            start_manager(subscriptions.clone(), redis_sender.clone());
 
-                let channels = map.get(&channel).unwrap().values();
-                let mut counter = 0;
-                for c in channels {
-                    c.send(channel.clone()).await.unwrap();
-                    counter = counter + 1;
-                }
-
-                dbg!(counter);
-            }
-
-            let handle_channel = |command: RedisChannelCommands| async {
-                match command {
-                    RedisChannelCommands::Sub(evt) => {
-                        redis_client
-                            .subscribe((*evt).to_owned())
-                            .await
-                            .expect("To subscribe to redis event");
-                    }
-                    RedisChannelCommands::Unsub(evt) => {
-                        redis_client
-                            .unsubscribe((*evt).to_owned())
-                            .await
-                            .expect("To unsubscribe to redis event");
-                    }
-                }
-            };
-
-            // let handle_channel = Box::pin(handle_channel);
-
+        let _manager_handle = tokio::spawn(async move {
             loop {
-                tokio::select! {
-                    Some(msg) = rx.recv() => handle_channel(msg).await,
-                    Ok(redis_msg) = redis_channel.recv() => handle_redis(redis_msg,&subscriptions).await,
-                };
+                tokio::time::sleep(Duration::from_secs(10));
+                eprintln!("Waa");
             }
         });
 
         Self {
-            user_events: Mutex::new(HashMap::new()),
-            _redis_handle: manager_task,
-            redis_sender: tx,
+            _redis_handle,
+            _manager_handle,
+            redis_sender,
             subscriptions,
+            user_events: Mutex::new(HashMap::new()),
         }
     }
 

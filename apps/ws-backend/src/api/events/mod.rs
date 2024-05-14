@@ -1,3 +1,4 @@
+mod manager_channel;
 mod redis_channel;
 mod state;
 mod user_subscription;
