@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use rocket::{Build, Rocket, State};
@@ -16,9 +17,14 @@ mod state;
 mod user_channel;
 mod user_state;
 mod user_subscription;
+pub type EventName = Arc<str>;
+pub type UserId = Arc<str>;
+pub type SubscriptionsMap = HashMap<EventName, HashMap<UserId, UserChannelSender>>;
+
 
 pub type UserChannelCommand = Arc<str>; // User Socket will only receive the event name for now . no value.
 pub type UserChannelSender = mpsc::Sender<UserChannelCommand>;
+pub type UserSubscriptionsMap = HashMap<UserId, Vec<EventName>>;
 
 pub async fn register(rocket: Rocket<Build>) -> Rocket<Build> {
     rocket
@@ -37,7 +43,7 @@ fn sub_events<'a>(
     let user_state = UserState {
         user_id: user.token.claims.sub.clone().into(),
         user_sender: sender,
-        manager_sender: state.manager_sender.clone(),
+        manager_sender: state.manager_tx.clone(),
     };
 
     ws.channel(move |stream| Box::pin(start_user_channel(stream, receiver, user_state)))

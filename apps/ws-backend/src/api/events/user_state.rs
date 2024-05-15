@@ -1,6 +1,5 @@
 use crate::api::events::manager_channel::ManagerChannelCommands;
-use crate::api::events::state::UserId;
-use crate::api::events::UserChannelCommand;
+use crate::api::events::{UserChannelCommand, UserId};
 use tokio::sync::mpsc;
 
 #[derive(Debug)]

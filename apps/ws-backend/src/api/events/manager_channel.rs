@@ -1,10 +1,13 @@
-use crate::api::events::redis_channel::RedisChannelCommands;
-use crate::api::events::state::{EventName, SubscriptionsMap, UserId, UserSubscriptionsMap};
-use crate::api::events::UserChannelSender;
+use crate::api::events::redis_channel::{RedisChannelCommands, RedisChannelResponse};
+use crate::api::events::{
+    EventName, SubscriptionsMap, UserChannelCommand, UserChannelSender, UserId,
+    UserSubscriptionsMap,
+};
+use rocket::futures::future::join_all;
+use rocket::futures::stream::FuturesUnordered;
+use rocket::futures::StreamExt;
 use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::mpsc::Sender;
-use tokio::sync::RwLock;
+use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 
 #[derive(Debug)]
@@ -34,31 +37,34 @@ pub struct ManagerDropUserMessage {
 
 #[derive(Debug)]
 struct ManagerState {
-    subscriptions: Arc<RwLock<SubscriptionsMap>>,
-    redis_sender: Sender<RedisChannelCommands>,
     user_cache: UserSubscriptionsMap,
+    subscriptions: SubscriptionsMap,
+    redis_tx: mpsc::Sender<RedisChannelCommands>,
+    redis_rx: mpsc::Receiver<RedisChannelResponse>,
 }
 
-pub fn start_manager(
-    subscriptions: Arc<RwLock<SubscriptionsMap>>,
-    redis_sender: Sender<RedisChannelCommands>,
-) -> (JoinHandle<()>, Sender<ManagerChannelCommands>) {
+pub fn start_manager_task(
+    redis_tx: mpsc::Sender<RedisChannelCommands>,
+    redis_rx: mpsc::Receiver<RedisChannelResponse>,
+) -> (JoinHandle<()>, mpsc::Sender<ManagerChannelCommands>) {
     let (sender, mut receiver) = tokio::sync::mpsc::channel::<ManagerChannelCommands>(5);
 
     let mut manager_state = ManagerState {
-        subscriptions,
-        redis_sender,
+        redis_tx,
+        redis_rx,
+        subscriptions: HashMap::new(),
         user_cache: HashMap::new(),
     };
 
     let code = async move {
         loop {
             tokio::select! {
+                Some(redis_response) = manager_state.redis_rx.recv() => handle_redis(redis_response,&mut manager_state).await,
                 Some(command) = receiver.recv() => match command {
                     ManagerChannelCommands::Subscribe(message) => handle_subscribe(message,&mut manager_state).await,
                     ManagerChannelCommands::Unsubscribe(message) => handle_unsubscribe(message,&mut manager_state).await,
                     ManagerChannelCommands::DropUser(message) => handle_drop_user(message,&mut manager_state).await,
-                }
+                },
             }
         }
     };
@@ -68,6 +74,23 @@ pub fn start_manager(
     (manager_handle, sender)
 }
 
+async fn handle_redis(response: RedisChannelResponse, manager_state: &mut ManagerState) {
+    let RedisChannelResponse::Event(event) = response;
+
+    let evt_map = if let Some(evt_map) = manager_state.subscriptions.get(&event) {
+        evt_map
+    } else {
+        return;
+    };
+
+    let futs = evt_map.iter().map(|(_, sender)| {
+        let event = event.clone();
+        sender.send(event)
+    });
+
+    join_all(futs).await;
+}
+
 async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut ManagerState) {
     let ManagerSubscribeMessage {
         user_id: user_name,
@@ -75,7 +98,7 @@ async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut 
         sender,
     } = message;
 
-    let mut subscriptions = manager_state.subscriptions.write().await;
+    let subscriptions = &mut manager_state.subscriptions;
 
     subscriptions
         .entry(event_name.clone())
@@ -84,8 +107,6 @@ async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut 
         })
         .or_insert_with(|| HashMap::from([(user_name.clone(), sender)]));
 
-    drop(subscriptions);
-
     let user_cache = &mut manager_state.user_cache;
 
     user_cache
@@ -93,7 +114,7 @@ async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut 
         .or_insert_with(|| vec![event_name.clone()]);
 
     manager_state
-        .redis_sender
+        .redis_tx
         .send(RedisChannelCommands::Sub(event_name))
         .await
         .expect("To send message to channel");
@@ -105,11 +126,10 @@ async fn handle_unsubscribe(message: ManagerUnsubscribeMessage, manager_state: &
         user_id: user_name,
     } = message;
 
-    let mut map = manager_state.subscriptions.write().await;
+    let map = &mut manager_state.subscriptions;
     if map.contains_key(&event_name) {
         map.remove(&event_name);
     }
-    drop(map);
 
     let map = &mut manager_state.user_cache;
     let user_map = map.get_mut(&user_name).unwrap();
@@ -136,7 +156,7 @@ async fn handle_drop_user(message: ManagerDropUserMessage, manager_state: &mut M
         return;
     }
 
-    let mut events_map = manager_state.subscriptions.write().await;
+    let events_map = &mut manager_state.subscriptions;
     for event in user_events.iter() {
         let event_map = events_map.get_mut(event).expect("To get event");
         event_map

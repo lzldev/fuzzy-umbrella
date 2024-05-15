@@ -1,69 +1,78 @@
-use crate::api::events::state::SubscriptionsMap;
+use crate::api::events::EventName;
 use fred::clients::RedisClient;
 use fred::interfaces::{EventInterface, PubsubInterface};
 use std::sync::Arc;
-use tokio::{sync::RwLock, task::JoinHandle};
+use tokio::sync::mpsc;
+use tokio::task::JoinHandle;
 
 #[derive(Debug)]
 pub enum RedisChannelCommands {
-    Sub(Arc<str>),
-    Unsub(Arc<str>),
+    Sub(EventName),
+    Unsub(EventName),
+}
+
+#[derive(Debug)]
+pub enum RedisChannelResponse {
+    Event(EventName),
+}
+
+#[derive(Debug)]
+struct PubSubChannelState {
+    redis_client: RedisClient,
+    response_tx: mpsc::Sender<RedisChannelResponse>,
 }
 
 pub fn start_redis_task(
     redis_client: RedisClient,
-    subscriptions: Arc<RwLock<SubscriptionsMap>>,
 ) -> (
     JoinHandle<()>,
-    tokio::sync::mpsc::Sender<RedisChannelCommands>,
+    mpsc::Sender<RedisChannelCommands>,
+    mpsc::Receiver<RedisChannelResponse>,
 ) {
-    let (sender, mut receive) = tokio::sync::mpsc::channel::<RedisChannelCommands>(5);
+    let (response_tx, response_rx) = mpsc::channel::<RedisChannelResponse>(5);
+    let (command_tx, mut command_rx) = mpsc::channel::<RedisChannelCommands>(5);
+
+    let mut redis_rx = redis_client.message_rx();
+
+    let redis_channel_state = PubSubChannelState {
+        redis_client,
+        response_tx,
+    };
 
     let handle = tokio::spawn(async move {
-        let mut redis_channel = redis_client.message_rx();
-
         loop {
             tokio::select! {
-                Ok(redis_msg) = redis_channel.recv() => handle_redis(redis_msg,&subscriptions).await,
-                Some(command) = receive.recv() => handle_channel(&redis_client,command).await,
+                Some(command) = command_rx.recv() => handle_command(&redis_channel_state,command).await,
+                Ok(redis_msg) = redis_rx.recv() => handle_redis(&redis_channel_state,redis_msg).await,
             }
         }
     });
 
-    (handle, sender)
+    (handle, command_tx, response_rx)
 }
 
-async fn handle_redis(
-    message: fred::types::Message,
-    subscriptions: &Arc<RwLock<SubscriptionsMap>>,
-) {
+async fn handle_redis(redis_channel_state: &PubSubChannelState, message: fred::types::Message) {
     let channel: Arc<str> = message.channel.to_string().into();
-    let map = subscriptions.write().await;
-    if !map.contains_key(&channel) {
-        eprintln!("Subscribed event not found in map {:?}", &channel);
-        return;
-    }
 
-    let channels = map.get(&channel).unwrap().values();
-    let mut counter = 0;
-    for c in channels {
-        c.send(channel.clone()).await.unwrap();
-        counter += 1;
-    }
-
-    println!("Sent {channel} event to {counter} connections.");
+    redis_channel_state
+        .response_tx
+        .send(RedisChannelResponse::Event(channel))
+        .await
+        .expect("To send message to manager");
 }
 
-async fn handle_channel(redis_client: &RedisClient, command: RedisChannelCommands) {
+async fn handle_command(state: &PubSubChannelState, command: RedisChannelCommands) {
     match command {
         RedisChannelCommands::Sub(evt) => {
-            redis_client
+            state
+                .redis_client
                 .subscribe((*evt).to_owned())
                 .await
                 .expect("To subscribe to redis event");
         }
         RedisChannelCommands::Unsub(evt) => {
-            redis_client
+            state
+                .redis_client
                 .unsubscribe((*evt).to_owned())
                 .await
                 .expect("To unsubscribe to redis event");

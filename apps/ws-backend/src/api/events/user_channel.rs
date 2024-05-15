@@ -17,22 +17,9 @@ pub async fn start_user_channel(
 ) -> Result<(), rocket_ws::result::Error> {
     loop {
         tokio::select! {
-            r = stream.next() => {
-                let message = match r {
-                    Some(Ok(message)) => message,
-                    _ => break,
-                };
-
-                handle_message(&mut stream,&user_state,message).await;
-            },
-            r = user_receiver.recv() => {
-                let message = match r {
-                    Some(m) => m,
-                    None => break,
-                };
-
-                handle_redis(&mut stream,&user_state,message).await;
-            }
+            Some(Ok(message)) = stream.next() => handle_message(&mut stream,&user_state,message).await,
+            Some(message) = user_receiver.recv() => handle_response(&mut stream,&user_state,message).await,
+            else => break
         }
     }
 
@@ -47,7 +34,11 @@ pub async fn start_user_channel(
     Ok(())
 }
 
-async fn handle_redis(stream: &mut DuplexStream, _state: &UserState, message: UserChannelCommand) {
+async fn handle_response(
+    stream: &mut DuplexStream,
+    _state: &UserState,
+    message: UserChannelCommand,
+) {
     let msg = ServerMessage::Received(ReceivedMessage {
         event_name: (*message).to_owned(),
     });
