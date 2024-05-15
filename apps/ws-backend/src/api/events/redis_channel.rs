@@ -2,10 +2,7 @@ use crate::api::events::state::SubscriptionsMap;
 use fred::clients::RedisClient;
 use fred::interfaces::{EventInterface, PubsubInterface};
 use std::sync::Arc;
-use tokio::{
-    sync::{mpsc::Sender, RwLock},
-    task::JoinHandle,
-};
+use tokio::{sync::RwLock, task::JoinHandle};
 
 #[derive(Debug)]
 pub enum RedisChannelCommands {
