@@ -1,6 +1,6 @@
 use crate::api::events::manager_channel::{
-    ManagerChannelCommands, ManagerDropUserMessage, ManagerSubscribeMessage,
-    ManagerUnsubscribeMessage,
+    ManagerChannelCommands, ManagerDropUserMessage, ManagerRegisterMessage,
+    ManagerRegisterResponse, ManagerSubscribeMessage, ManagerUnsubscribeMessage,
 };
 use crate::api::events::user_state::UserState;
 use crate::api::events::UserChannelCommand;
@@ -10,24 +10,64 @@ use rocket::futures::{SinkExt, StreamExt};
 use rocket_ws::{stream::DuplexStream, Message};
 use tokio::sync::mpsc;
 
+use super::UserId;
+
 pub async fn start_user_channel(
     mut stream: DuplexStream,
-    mut user_receiver: mpsc::Receiver<UserChannelCommand>,
-    user_state: UserState,
+    user_id: UserId,
+    manager_sender: mpsc::Sender<ManagerChannelCommands>,
 ) -> Result<(), rocket_ws::result::Error> {
+    let (register_tx, register_rx) = tokio::sync::oneshot::channel::<ManagerRegisterResponse>();
+
+    manager_sender
+        .send(ManagerChannelCommands::Register(ManagerRegisterMessage {
+            user_id: user_id.clone(),
+            register_tx,
+        }))
+        .await
+        .unwrap();
+
+    let ManagerRegisterResponse {
+        channel_id,
+        mut user_rx,
+    } = register_rx.await.unwrap();
+
+    let user_state = UserState {
+        channel_id,
+        user_id,
+        manager_sender,
+    };
+
     loop {
         tokio::select! {
-            Some(Ok(message)) = stream.next() => handle_message(&mut stream,&user_state,message).await,
-            Some(message) = user_receiver.recv() => handle_response(&mut stream,&user_state,message).await,
+            soc = stream.next() => {
+                let message = match soc {
+                    Some(Ok(message)) => message,
+                    _ => break
+                };
+
+                handle_message(&mut stream,&user_state,message).await
+            },
+            Ok(message) = user_rx.recv() => handle_response(&mut stream,&user_state,message).await,
             else => break
         }
     }
 
+    dbg!("Closing Socket");
+
+    if user_state.manager_sender.is_closed() {
+        return Ok(());
+    }
+
+    drop(user_rx);
+
     user_state
         .manager_sender
-        .send(ManagerChannelCommands::DropUser(ManagerDropUserMessage {
-            user_id: user_state.user_id,
-        }))
+        .send(ManagerChannelCommands::DropConnection(
+            ManagerDropUserMessage {
+                user_id: user_state.user_id,
+            },
+        ))
         .await
         .unwrap();
 
@@ -76,7 +116,6 @@ async fn handle_message(stream: &mut DuplexStream, user_state: &UserState, messa
                 .manager_sender
                 .send(ManagerChannelCommands::Subscribe(ManagerSubscribeMessage {
                     user_id: user_state.user_id.clone(),
-                    sender: user_state.user_sender.clone(),
                     event_name: msg.event_name.into(),
                 }))
                 .await
