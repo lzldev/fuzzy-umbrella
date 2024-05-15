@@ -2,7 +2,7 @@ use crate::api::events::manager_channel::ManagerChannelCommands;
 use crate::api::events::UserId;
 use tokio::sync::mpsc;
 
-use super::{ChannelId, UserChannelTx};
+use super::ChannelId;
 
 #[derive(Debug)]
 pub struct UserState {

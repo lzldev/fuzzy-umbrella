@@ -2,12 +2,11 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use rocket::{Build, Rocket, State};
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::broadcast;
 
 use ws_backend::auth::ClerkUser;
 
 use crate::api::events::user_channel::start_user_channel;
-use crate::api::events::user_state::UserState;
 
 use self::state::EventChannelState;
 use self::user_subscription::UserPubSub;

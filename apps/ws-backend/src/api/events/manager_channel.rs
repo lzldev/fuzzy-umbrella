@@ -69,7 +69,7 @@ pub fn start_manager_task(
 
     let code = async move {
         loop {
-            tokio::select! {
+            let cmd = tokio::select! {
                 Some(redis_response) = manager_state.redis_rx.recv() => handle_redis(redis_response,&mut manager_state).await,
                 Some(command) = receiver.recv() => match command {
                     ManagerChannelCommands::Register(message) => handle_register(message,&mut manager_state).await,
@@ -77,6 +77,11 @@ pub fn start_manager_task(
                     ManagerChannelCommands::Unsubscribe(message) => handle_unsubscribe(message,&mut manager_state).await,
                     ManagerChannelCommands::DropConnection(message) => handle_drop_user(message,&mut manager_state).await,
                 },
+                else => Ok::<_,anyhow::Error>(()),
+            };
+
+            if let Err(err) = cmd {
+                eprintln!("{err:?}");
             }
         }
     };
@@ -86,13 +91,16 @@ pub fn start_manager_task(
     (manager_handle, sender)
 }
 
-async fn handle_redis(response: RedisChannelResponse, manager_state: &mut ManagerState) {
+async fn handle_redis(
+    response: RedisChannelResponse,
+    manager_state: &mut ManagerState,
+) -> Result<(), anyhow::Error> {
     let RedisChannelResponse::Event(event) = response;
 
     let evt_map = if let Some(evt_map) = manager_state.subscriptions.get(&event) {
         evt_map
     } else {
-        return;
+        return Ok(());
     };
 
     for user in evt_map {
@@ -100,9 +108,13 @@ async fn handle_redis(response: RedisChannelResponse, manager_state: &mut Manage
 
         user_tx.send(event.clone()).unwrap();
     }
+    Ok(())
 }
 
-async fn handle_register(message: ManagerRegisterMessage, manager_state: &mut ManagerState) {
+async fn handle_register(
+    message: ManagerRegisterMessage,
+    manager_state: &mut ManagerState,
+) -> Result<(), anyhow::Error> {
     let ManagerRegisterMessage {
         user_id,
         register_tx,
@@ -117,7 +129,7 @@ async fn handle_register(message: ManagerRegisterMessage, manager_state: &mut Ma
                 user_rx: user_channel.user_tx.subscribe(),
             })
             .unwrap();
-        return;
+        return Ok(());
     }
 
     let (user_tx, user_rx) = broadcast::channel(10);
@@ -135,9 +147,14 @@ async fn handle_register(message: ManagerRegisterMessage, manager_state: &mut Ma
             user_rx: user_rx,
         })
         .unwrap();
+
+    Ok(())
 }
 
-async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut ManagerState) {
+async fn handle_subscribe(
+    message: ManagerSubscribeMessage,
+    manager_state: &mut ManagerState,
+) -> Result<(), anyhow::Error> {
     let ManagerSubscribeMessage {
         user_id: user_name,
         event_name,
@@ -164,9 +181,13 @@ async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut 
         .send(RedisChannelCommands::Sub(event_name))
         .await
         .expect("To send message to channel");
+    Ok(())
 }
 
-async fn handle_unsubscribe(message: ManagerUnsubscribeMessage, manager_state: &mut ManagerState) {
+async fn handle_unsubscribe(
+    message: ManagerUnsubscribeMessage,
+    manager_state: &mut ManagerState,
+) -> Result<(), anyhow::Error> {
     let ManagerUnsubscribeMessage {
         event_name,
         user_id,
@@ -175,7 +196,7 @@ async fn handle_unsubscribe(message: ManagerUnsubscribeMessage, manager_state: &
     let map = &mut manager_state.subscriptions;
     let event = match map.get_mut(&event_name) {
         Some(t) => t,
-        None => return,
+        None => return Ok(()),
     };
 
     if event.remove(&user_id) {
@@ -198,16 +219,19 @@ async fn handle_unsubscribe(message: ManagerUnsubscribeMessage, manager_state: &
         .expect("To find index in user_map");
     let _ = user_map.swap_remove(idx);
 
-    //TODO: Send UNSUB to redis if event is empty
+    Ok(())
 }
 
-async fn handle_drop_user(message: ManagerDropUserMessage, manager_state: &mut ManagerState) {
+async fn handle_drop_user(
+    message: ManagerDropUserMessage,
+    manager_state: &mut ManagerState,
+) -> Result<(), anyhow::Error> {
     let ManagerDropUserMessage { user_id } = message;
 
     let user_connection = manager_state.user_channels.get_mut(&user_id).unwrap();
     if user_connection.connections > 1 {
         user_connection.connections -= 1;
-        return;
+        return Ok(());
     }
 
     let user_cache = &mut manager_state.user_events;
@@ -216,12 +240,12 @@ async fn handle_drop_user(message: ManagerDropUserMessage, manager_state: &mut M
         Some(u) => u,
         None => {
             dbg!("[MANAGER] Trying to drop nonexistent user");
-            return;
+            return Ok(());
         }
     };
 
     if user_events.is_empty() {
-        return;
+        return Ok(());
     }
 
     let events_map = &mut manager_state.subscriptions;
@@ -229,4 +253,6 @@ async fn handle_drop_user(message: ManagerDropUserMessage, manager_state: &mut M
         let event_map = events_map.get_mut(event).expect("To get event");
         event_map.remove(&user_id);
     }
+
+    Ok(())
 }

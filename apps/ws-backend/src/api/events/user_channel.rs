@@ -53,13 +53,11 @@ pub async fn start_user_channel(
         }
     }
 
-    dbg!("Closing Socket");
+    println!("Closing Socket : {channel_id} {}", user_state.user_id);
 
     if user_state.manager_sender.is_closed() {
         return Ok(());
     }
-
-    drop(user_rx);
 
     user_state
         .manager_sender
