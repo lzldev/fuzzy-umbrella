@@ -51,7 +51,7 @@ async fn handle_redis(
         counter = counter + 1;
     }
 
-    dbg!(counter);
+    println!("Sent {channel} event to {counter} connections.");
 }
 
 async fn handle_channel(redis_client: &RedisClient, command: RedisChannelCommands) {

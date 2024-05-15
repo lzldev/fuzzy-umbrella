@@ -1,7 +1,6 @@
 use crate::api::events::redis_channel::RedisChannelCommands;
 use crate::api::events::state::{EventName, SubscriptionsMap, UserId, UserSubscriptionsMap};
 use crate::api::events::UserChannelSender;
-use rocket::futures::task::SpawnExt;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
@@ -10,13 +9,13 @@ use tokio::task::JoinHandle;
 
 #[derive(Debug)]
 pub enum ManagerChannelCommands {
-    Subscribe(ManagerSubscribeCommand),
+    Subscribe(ManagerSubscribeMessage),
     Unsubscribe(ManagerUnsubscribeMessage),
     DropUser(ManagerDropUserMessage),
 }
 
 #[derive(Debug)]
-pub struct ManagerSubscribeCommand {
+pub struct ManagerSubscribeMessage {
     pub event_name: EventName,
     pub user_id: UserId,
     pub sender: UserChannelSender,
@@ -69,8 +68,8 @@ pub fn start_manager(
     (manager_handle, sender)
 }
 
-async fn handle_subscribe(message: ManagerSubscribeCommand, manager_state: &mut ManagerState) {
-    let ManagerSubscribeCommand {
+async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut ManagerState) {
+    let ManagerSubscribeMessage {
         user_id: user_name,
         event_name,
         sender,
@@ -133,7 +132,13 @@ async fn handle_drop_user(message: ManagerDropUserMessage, manager_state: &mut M
     let ManagerDropUserMessage { user_id } = message;
 
     let mut user_cache = &mut manager_state.user_cache;
-    let user_events = user_cache.get(&user_id).expect("To find user");
+    let user_events = match user_cache.remove(&user_id) {
+        Some(u) => u,
+        None => {
+            dbg!("[MANAGER] Trying to drop nonexistent user");
+            return;
+        }
+    };
 
     if (user_events.is_empty()) {
         return;

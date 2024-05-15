@@ -21,10 +21,10 @@ pub type UserSubscriptionsMap = HashMap<UserId, Vec<EventName>>;
 pub struct EventChannelState {
     _redis_handle: JoinHandle<()>,
     _manager_handle: JoinHandle<()>,
-    redis_sender: mpsc::Sender<RedisChannelCommands>,
-    manager_sender: mpsc::Sender<ManagerChannelCommands>,
     user_events: Mutex<UserSubscriptionsMap>, // This can be a Box::pin?
     subscriptions: Arc<RwLock<SubscriptionsMap>>, // This lock can be removed by doing | Redis -> Manager
+    pub redis_sender: mpsc::Sender<RedisChannelCommands>,
+    pub manager_sender: mpsc::Sender<ManagerChannelCommands>,
 }
 
 impl EventChannelState {
