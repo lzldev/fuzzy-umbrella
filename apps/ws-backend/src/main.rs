@@ -20,7 +20,7 @@ async fn launch() -> _ {
 
     let origins = env
         .get_env_var(WSBackendEnvVars::CORSOrigins)
-        .split(",")
+        .split(',')
         .map(str::to_owned)
         .collect::<Vec<String>>();
 
@@ -77,22 +77,22 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
             let mut interval = tokio::time::interval(Duration::from_secs(60));
             let _ = interval.tick().await;
 
-            let _ = {
-                let msg_buf = state.msg_buf.read().await;
-                let mut old = msg_buf
-                    .range(
-                        ..if msg_buf.len() < 50 {
-                            msg_buf.len()
-                        } else {
-                            50
-                        },
-                    )
-                    .rev();
+            let msg_buf = state.msg_buf.read().await;
+            let last_messages = msg_buf
+                .range(
+                    ..if msg_buf.len() < 50 {
+                        msg_buf.len()
+                    } else {
+                        50
+                    },
+                )
+                .rev();
 
-                while let Some(msg) = old.next() {
-                    let _ = stream.send(msg.content.as_str().into()).await?;
-                }
-            };
+            for msg in last_messages {
+                stream.send(msg.content.as_str().into()).await?;
+            }
+
+            drop(msg_buf);
 
             let sender = state.sender.clone();
             let mut receiver = state.sender.subscribe();
@@ -121,7 +121,7 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
                             let v = &state
                                 .atomic_counter
                                 .load(std::sync::atomic::Ordering::Relaxed);
-                            let v = v.clone() -1 ;
+                            let v = *v -1 ;
                             let _ = stream.send(format!("[DEBUG] Connections: {v}").into()).await;
                             continue;
                         }
@@ -129,7 +129,7 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
                         let txt : &str = message.to_text().unwrap();
                         sender.send(ChatMessage {
                             content:format!("[{}] {}",n,txt).to_owned(),
-                            user_id:n.clone() as usize,
+                            user_id:n as usize,
                         }).unwrap();
                     }
                 }

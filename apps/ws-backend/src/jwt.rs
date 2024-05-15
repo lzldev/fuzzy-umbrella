@@ -23,7 +23,7 @@ pub fn decode_jwt(token: &str, key_set: &JwkSet) -> Result<TokenData<Claims>, an
         _ => return Err(anyhow!("Token Algorithm not supported")),
     };
 
-    if let None = header.kid {
+    if header.kid.is_none() {
         return Err(anyhow!("Token header has no KID"));
     }
 

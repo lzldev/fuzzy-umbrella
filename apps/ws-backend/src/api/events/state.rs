@@ -1,4 +1,3 @@
-use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
 
 use fred::{clients::RedisClient, interfaces::ClientLike, types::RedisConfig};
@@ -6,7 +5,7 @@ use fred::{clients::RedisClient, interfaces::ClientLike, types::RedisConfig};
 use crate::api::events::manager_channel::{start_manager, ManagerChannelCommands};
 use crate::api::events::redis_channel::start_redis_task;
 use tokio::{
-    sync::{mpsc, Mutex, RwLock},
+    sync::{mpsc, RwLock},
     task::JoinHandle,
 };
 
@@ -21,8 +20,6 @@ pub type UserSubscriptionsMap = HashMap<UserId, Vec<EventName>>;
 pub struct EventChannelState {
     _redis_handle: JoinHandle<()>,
     _manager_handle: JoinHandle<()>,
-    user_events: Mutex<UserSubscriptionsMap>, // This can be a Box::pin?
-    subscriptions: Arc<RwLock<SubscriptionsMap>>, // This lock can be removed by doing | Redis -> Manager
     pub redis_sender: mpsc::Sender<RedisChannelCommands>,
     pub manager_sender: mpsc::Sender<ManagerChannelCommands>,
 }
@@ -42,7 +39,10 @@ impl EventChannelState {
             None,
         );
 
-        redis_client.init().await.expect("To connect to redis");
+        redis_client
+            .init()
+            .await
+            .expect("Couldn't init Redis Connection");
 
         let (_redis_handle, redis_sender) = start_redis_task(redis_client, subscriptions_handle);
 
@@ -54,8 +54,6 @@ impl EventChannelState {
             _manager_handle,
             redis_sender,
             manager_sender,
-            subscriptions,
-            user_events: Mutex::new(HashMap::new()),
         }
     }
 }

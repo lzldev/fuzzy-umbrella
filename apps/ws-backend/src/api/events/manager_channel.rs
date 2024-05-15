@@ -75,30 +75,22 @@ async fn handle_subscribe(message: ManagerSubscribeMessage, manager_state: &mut 
         sender,
     } = message;
 
-    let mut map = manager_state.subscriptions.write().await;
+    let mut subscriptions = manager_state.subscriptions.write().await;
 
-    if !map.contains_key(&event_name) {
-        map.insert(
-            event_name.clone(),
-            HashMap::from([(user_name.clone(), sender)]),
-        );
-    } else {
-        let subs = map.get_mut(&event_name).unwrap();
-        subs.insert(user_name.clone(), sender);
-    }
-    drop(map);
+    subscriptions
+        .entry(event_name.clone())
+        .and_modify(|m| {
+            m.insert(user_name.clone(), sender.clone());
+        })
+        .or_insert_with(|| HashMap::from([(user_name.clone(), sender)]));
 
-    {
-        let mut user_map = &mut manager_state.user_cache;
-        if user_map.contains_key(&user_name) {
-            user_map
-                .get_mut(&user_name)
-                .unwrap()
-                .push(event_name.clone());
-        } else {
-            user_map.insert(user_name, vec![event_name.clone()]);
-        }
-    };
+    drop(subscriptions);
+
+    let user_cache = &mut manager_state.user_cache;
+
+    user_cache
+        .entry(user_name)
+        .or_insert_with(|| vec![event_name.clone()]);
 
     manager_state
         .redis_sender
@@ -119,8 +111,8 @@ async fn handle_unsubscribe(message: ManagerUnsubscribeMessage, manager_state: &
     }
     drop(map);
 
-    let mut map = &mut manager_state.user_cache;
-    let mut user_map = map.get_mut(&user_name).unwrap();
+    let map = &mut manager_state.user_cache;
+    let user_map = map.get_mut(&user_name).unwrap();
     let idx = user_map
         .binary_search(&event_name)
         .expect("To find index in user_map");
@@ -131,7 +123,7 @@ async fn handle_unsubscribe(message: ManagerUnsubscribeMessage, manager_state: &
 async fn handle_drop_user(message: ManagerDropUserMessage, manager_state: &mut ManagerState) {
     let ManagerDropUserMessage { user_id } = message;
 
-    let mut user_cache = &mut manager_state.user_cache;
+    let user_cache = &mut manager_state.user_cache;
     let user_events = match user_cache.remove(&user_id) {
         Some(u) => u,
         None => {
@@ -140,7 +132,7 @@ async fn handle_drop_user(message: ManagerDropUserMessage, manager_state: &mut M
         }
     };
 
-    if (user_events.is_empty()) {
+    if user_events.is_empty() {
         return;
     }
 

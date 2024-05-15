@@ -64,7 +64,7 @@ impl WSBackendState {
                     sender3
                         .send(ChatMessage {
                             user_id: 0,
-                            content: format!("[SERVER] Hello from server :3"),
+                            content: "[SERVER] Hello from server :3".to_string(),
                         })
                         .unwrap();
                 }
@@ -119,26 +119,16 @@ impl WSBackendState {
 
                 Some(())
             }
+            
             loop {
                 tokio::select! {
-                        redis_msg = sub.recv() => redis_handler(redis_msg).await,
-                        manager_message = manager_subscribe.recv() => match handle_message(&msg_buf,manager_message).await {
-                            _ => { continue }
-                        }
-                };
+                    redis_msg = sub.recv() => redis_handler(redis_msg).await,
+                    manager_message = manager_subscribe.recv() => {
+                        handle_message(&msg_buf,manager_message).await;
+                        continue;
+                    }
+                }
             }
-
-            // while let Ok(msg) = manager_subscribe.recv().await {
-            //     let mut msg_buf = msg_buf.deref().write().await;
-            //     msg_buf.push_front(msg);
-            //     let cap = msg_buf.capacity() / 4;
-            //     let len = msg_buf.len();
-            //     if len < cap {
-            //         continue;
-            //     }
-
-            //     msg_buf.truncate(cap);
-            // }
         });
 
         Self {

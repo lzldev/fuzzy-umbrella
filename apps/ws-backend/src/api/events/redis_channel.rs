@@ -48,7 +48,7 @@ async fn handle_redis(
     let mut counter = 0;
     for c in channels {
         c.send(channel.clone()).await.unwrap();
-        counter = counter + 1;
+        counter += 1;
     }
 
     println!("Sent {channel} event to {counter} connections.");

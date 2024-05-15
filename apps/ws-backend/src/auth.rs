@@ -55,7 +55,7 @@ impl Fairing for ClerkFairing {
             Some(c) => c,
             None => {
                 request.set_uri(Origin::parse("/ws/unauthorized").unwrap());
-                return ();
+                return;
             }
         };
 
@@ -69,7 +69,7 @@ impl Fairing for ClerkFairing {
             Err(err) => {
                 eprintln!("Auth Error {err:#?}");
                 request.set_uri(Origin::parse("/ws/unauthorized").unwrap());
-                return ();
+                return;
             }
         };
 
