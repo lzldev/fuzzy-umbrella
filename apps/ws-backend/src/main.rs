@@ -60,7 +60,6 @@ async fn launch() -> _ {
 
 #[get("/ping")]
 fn ping_get(user: ClerkUser<'_>) -> &'static str {
-    dbg!(user);
     "Pong"
 }
 
@@ -73,9 +72,6 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
             let n = state
                 .atomic_counter
                 .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-
-            let mut interval = tokio::time::interval(Duration::from_secs(60));
-            let _ = interval.tick().await;
 
             let msg_buf = state.msg_buf.read().await;
             let last_messages = msg_buf
@@ -99,7 +95,7 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
 
             loop {
                 tokio::select! {
-                   msg = receiver.recv() => {
+                    msg = receiver.recv() => {
                         let msg = msg.expect("To unwrap channel message");
                         let _ = stream.send(msg.content.as_str().into()).await;
                     },
@@ -132,6 +128,7 @@ fn chat_channel(ws: rocket_ws::WebSocket, state: &State<WSBackendState>) -> rock
                             user_id:n as usize,
                         }).unwrap();
                     }
+                    else => break
                 }
             }
 

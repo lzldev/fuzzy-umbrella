@@ -47,7 +47,7 @@ impl Fairing for ClerkFairing {
     async fn on_request(&self, request: &mut Request<'_>, _: &mut Data<'_>) {
         let uri = request.uri().path();
 
-        if uri == "/ws/unauthorized" {
+        if uri == "/ws/unauthorized" || uri == "/ws/chat" {
             return;
         }
 

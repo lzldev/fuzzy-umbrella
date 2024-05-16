@@ -1,5 +1,6 @@
 use crate::api::events::redis_channel::{RedisChannelCommands, RedisChannelResponse};
 use crate::api::events::{EventName, SubscriptionsMap, UserChannelRx, UserId};
+use anyhow::anyhow;
 use std::collections::{HashMap, HashSet};
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::task::JoinHandle;
@@ -97,16 +98,16 @@ async fn handle_redis(
 ) -> Result<(), anyhow::Error> {
     let RedisChannelResponse::Event(event) = response;
 
-    let evt_map = if let Some(evt_map) = manager_state.subscriptions.get(&event) {
-        evt_map
-    } else {
-        return Ok(());
-    };
+    let evt_set = manager_state
+        .subscriptions
+        .get(&event)
+        .ok_or(anyhow!("Received unknown event from redis."))?;
 
-    for user in evt_map {
-        let UserPubSub { user_tx, .. } = manager_state.user_channels.get(user).unwrap();
-
-        user_tx.send(event.clone()).unwrap();
+    for user in evt_set {
+        manager_state
+            .user_channels
+            .get(user)
+            .and_then(|UserPubSub { user_tx, .. }| user_tx.send(event.clone()).ok());
     }
     Ok(())
 }
@@ -129,6 +130,7 @@ async fn handle_register(
                 user_rx: user_channel.user_tx.subscribe(),
             })
             .unwrap();
+
         return Ok(());
     }
 
@@ -235,6 +237,7 @@ async fn handle_drop_user(
     }
 
     let user_cache = &mut manager_state.user_events;
+
 
     let user_events = match user_cache.remove(&user_id) {
         Some(u) => u,

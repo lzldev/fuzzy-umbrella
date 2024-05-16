@@ -6,7 +6,6 @@ import { ClientMessage } from "artspace-shared";
 export const Route = createFileRoute("/sub")({
   component: WSComponent,
 });
-
 function WSComponent() {
   const wsref = useRef<WebSocket>();
   const txtref = useRef<HTMLInputElement>(null);

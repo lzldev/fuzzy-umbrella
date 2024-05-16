@@ -56,19 +56,19 @@ impl WSBackendState {
         let sender2 = sender.clone();
 
         let manager_handle = tokio::spawn(async move {
-            let sender3 = sender2.clone();
-            let _handle3 = tokio::spawn(async move {
-                let mut interval = tokio::time::interval(Duration::from_secs(5));
-                loop {
-                    interval.tick().await;
-                    sender3
-                        .send(ChatMessage {
-                            user_id: 0,
-                            content: "[SERVER] Hello from server :3".to_string(),
-                        })
-                        .unwrap();
-                }
-            });
+            // let sender3 = sender2.clone();
+            // let _handle3 = tokio::spawn(async move {
+            //     let mut interval = tokio::time::interval(Duration::from_secs(5));
+            //     loop {
+            //         interval.tick().await;
+            //         sender3
+            //             .send(ChatMessage {
+            //                 user_id: 0,
+            //                 content: "[SERVER] Hello from server :3".to_string(),
+            //             })
+            //             .unwrap();
+            //     }
+            // });
             let client = client;
 
             let _: () = client
@@ -103,7 +103,7 @@ impl WSBackendState {
                 let mut msg_buf = msg_buf.deref().write().await;
 
                 //TODO:Remove this.
-                if msg_buf.front().is_some_and(|f| f.user_id == 0) {
+                if msg.user_id == 0 && msg_buf.front().is_some_and(|f| f.user_id == 0) {
                     // Server is repeating messages ignore....
                     return None;
                 }
@@ -119,7 +119,7 @@ impl WSBackendState {
 
                 Some(())
             }
-            
+
             loop {
                 tokio::select! {
                     redis_msg = sub.recv() => redis_handler(redis_msg).await,

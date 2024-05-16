@@ -53,6 +53,15 @@ pub async fn start_user_channel(
         }
     }
 
+    //I Think a deadlock can happen here since the manager can broadcast to the user which will block the
+    // managaer,  if the user stops listening to the channel and send a message to the manager.
+    // this can potentially deadlock?
+    //
+    //
+    //
+    //
+    //
+
     println!("Closing Socket : {channel_id} {}", user_state.user_id);
 
     if user_state.manager_sender.is_closed() {
