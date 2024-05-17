@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef } from "react";
+import { useEvent } from "~/hooks/useEvent";
 import { usePubSub } from "~/hooks/usePubSub";
 import { useToast } from "~/shadcn/ui/use-toast";
 
@@ -8,8 +9,24 @@ export const Route = createFileRoute("/pubsub_test")({
 });
 
 function PUBSUBTEST() {
+  return (
+    <>
+      <PUBSUBTESTER />
+      <PUBSUBTESTER />
+    </>
+  );
+}
+function PUBSUBTESTER() {
   const txt = useRef<HTMLInputElement>(null!);
   const { toast } = useToast();
+  const { lastEvent } = useEvent({
+    events: ["CHAT:GLOBAL"],
+    onEvent(message) {
+      console.log("useevent");
+      toast({ title: "USEEVENT", description: message.message.eventName });
+    },
+  });
+
   const { unsubscribe, subscribe } = usePubSub({
     onEvent(message) {
       console.log("[Consumer] Pubsub Message : ", message);
@@ -23,7 +40,8 @@ function PUBSUBTEST() {
 
   return (
     <>
-      <div className="flex flex-[2] flex-col justify-center items-center p-4 text-xl gap-2">
+      <div className="flex flex-[2] flex-col justify-center items-center p-4 text-xl gap-2 bg-neutral-200">
+        <div className="text-3xl">{lastEvent?.message.eventName}</div>
         <div className="gap-2">
           Connected:
           <span className="font-bold">{status}</span>

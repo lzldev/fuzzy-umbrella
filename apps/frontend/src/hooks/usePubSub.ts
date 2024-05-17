@@ -1,6 +1,7 @@
 import { ServerMessage, ClientMessage } from "artspace-shared";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useToast } from "~/shadcn/ui/use-toast";
+import { useWebSocketStore } from "~/store/WebsocketStore";
 
 export type PubSubOptions = {
   onEvent: (message: ServerMessage) => any;
@@ -9,7 +10,8 @@ export type PubSubOptions = {
 export function usePubSub(options: PubSubOptions) {
   const { toast } = useToast();
 
-  const [ws, setWs] = useState<WebSocket>();
+  const { ws, addTicket, removeTicket, openSocket, closeSocket } =
+    useWebSocketStore();
 
   const onEvent = useCallback(options.onEvent, [options.onEvent]);
 
@@ -20,10 +22,17 @@ export function usePubSub(options: PubSubOptions) {
     console.log("[PUBSUB] useEffect");
 
     const onOpenListener = (event: Event) => {
-      if (firstMessage.current) {
-        send(firstMessage.current);
-        firstMessage.current = undefined;
+      isOpen.current = true;
+
+      if (startingMessages.current.length === 0) {
+        return;
       }
+
+      for (const message of startingMessages.current) {
+        send(message);
+      }
+
+      startingMessages.current.length = 0;
     };
     const onCloseListener = (event: Event) => {};
     const onErrorListener = (event: Event) => {
@@ -65,6 +74,14 @@ export function usePubSub(options: PubSubOptions) {
     };
   }, [ws]);
 
+  useEffect(() => {
+    addTicket();
+    return () => {
+      removeTicket();
+      closeSocket();
+    };
+  }, []);
+
   const send = useMemo(() => {
     console.log("[SEND] Update");
     return (message: ClientMessage) => {
@@ -77,16 +94,18 @@ export function usePubSub(options: PubSubOptions) {
     };
   }, [ws]);
 
-  const firstMessage = useRef<ClientMessage>();
+  const isOpen = useRef<boolean>(false);
+  const startingMessages = useRef<ClientMessage[]>([]);
 
   const connectWithMessage = useCallback((startingMessage: ClientMessage) => {
-    firstMessage.current = startingMessage;
-    setWs(new WebSocket("ws://localhost:8000/ws/sub"));
+    startingMessages.current.push(startingMessage);
+    console.log("setting ws", ws);
+    openSocket();
   }, []);
 
   const subscribe = useCallback(
     (channel: string) => {
-      const message = {
+      const subscribeMessage = {
         event: "subscribe",
         message: {
           eventName: channel,
@@ -95,17 +114,19 @@ export function usePubSub(options: PubSubOptions) {
 
       if (!ws) {
         console.log("[SUB] Connecting before subscribing...");
-        connectWithMessage(message);
+        connectWithMessage(subscribeMessage);
         return;
+      } else if (!isOpen.current) {
+        console.log("[SUB] Just appending message");
+        startingMessages.current.push(subscribeMessage);
       }
-      send(message);
+      send(subscribeMessage);
     },
     [ws, send]
   );
 
   const unsubscribe = (channel: string) => {
     if (!ws) {
-      console.error("trying to unsub before creating a socket");
       return;
     }
 

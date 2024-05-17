@@ -237,7 +237,7 @@ async fn handle_drop_user(
         user_connection.connections -= 1;
         return Ok(());
     } else {
-        println!("dropping user {user_id}");
+        dbg!("User dropped");
         manager_state.user_channels.remove(&user_id);
     }
 
@@ -246,7 +246,7 @@ async fn handle_drop_user(
     let user_events = match user_cache.remove(&user_id) {
         Some(u) => u,
         None => {
-            dbg!("[MANAGER] Trying to drop nonexistent user");
+            dbg!("User had no events");
             return Ok(());
         }
     };
