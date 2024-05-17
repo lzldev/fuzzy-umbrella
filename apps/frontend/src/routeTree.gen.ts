@@ -15,6 +15,7 @@ import { Route as WstestImport } from './routes/ws_test'
 import { Route as UploadImport } from './routes/upload'
 import { Route as TestImport } from './routes/test'
 import { Route as SubImport } from './routes/sub'
+import { Route as PubsubtestImport } from './routes/pubsub_test'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthProfileImport } from './routes/_auth/profile'
@@ -39,6 +40,11 @@ const TestRoute = TestImport.update({
 
 const SubRoute = SubImport.update({
   path: '/sub',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const PubsubtestRoute = PubsubtestImport.update({
+  path: '/pubsub_test',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -74,6 +80,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthImport
       parentRoute: typeof rootRoute
     }
+    '/pubsub_test': {
+      preLoaderRoute: typeof PubsubtestImport
+      parentRoute: typeof rootRoute
+    }
     '/sub': {
       preLoaderRoute: typeof SubImport
       parentRoute: typeof rootRoute
@@ -106,6 +116,7 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   AuthRoute.addChildren([AuthChatRoute, AuthProfileRoute]),
+  PubsubtestRoute,
   SubRoute,
   TestRoute,
   UploadRoute,

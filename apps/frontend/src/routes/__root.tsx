@@ -4,6 +4,7 @@ import type { useAuth } from "@clerk/clerk-react";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Container } from "~/components/Container";
 import { Navbar } from "~/components/Navbar";
+import { Toaster } from "~/shadcn/ui/toaster";
 
 export type RouterContext = {
   auth: ReturnType<typeof useAuth>;
@@ -21,6 +22,7 @@ function RootComponent() {
         <Outlet />
       </Container>
       <TanStackRouterDevtools position="bottom-right" />
+      <Toaster />
     </>
   );
 }

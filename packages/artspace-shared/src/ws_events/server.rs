@@ -7,7 +7,6 @@ use ts_rs::TS;
 pub enum ServerMessage {
     Received(ReceivedMessage),
     Error(ErrorMessage),
-    Close,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
