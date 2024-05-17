@@ -1,5 +1,5 @@
 import { ServerMessage, ClientMessage } from "artspace-shared";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "~/shadcn/ui/use-toast";
 
 export type PubSubOptions = {
@@ -9,32 +9,23 @@ export type PubSubOptions = {
 export function usePubSub(options: PubSubOptions) {
   const { toast } = useToast();
 
-  const ws = useRef<WebSocket>();
+  const [ws, setWs] = useState<WebSocket>();
 
-  const send = useCallback(
-    (message: ClientMessage) => {
-      if (!ws.current) {
-        console.error("trying to send event without a socket");
-        return;
-      }
-      ws.current?.send(JSON.stringify(message));
-    },
-    [ws.current]
-  );
+  const onEvent = useCallback(options.onEvent, [options.onEvent]);
 
-  const updateListeners = () => {
-    if (!ws.current) {
-      console.info("Effect : Socket not found");
+  useEffect(() => {
+    if (!ws) {
       return;
     }
+    console.log("[PUBSUB] useEffect");
 
-    console.info("Adding pubsub Socket listeners");
     const onOpenListener = (event: Event) => {
-      console.info("Pubsub Open");
+      if (firstMessage.current) {
+        send(firstMessage.current);
+        firstMessage.current = undefined;
+      }
     };
-    const onCloseListener = (event: Event) => {
-      console.info("Pubsub Close");
-    };
+    const onCloseListener = (event: Event) => {};
     const onErrorListener = (event: Event) => {
       toast({
         title: "Error",
@@ -55,62 +46,65 @@ export function usePubSub(options: PubSubOptions) {
         return;
       }
 
-      options.onEvent(message);
+      onEvent(message);
     };
 
-    ws.current.addEventListener("open", onOpenListener);
-    ws.current.addEventListener("close", onCloseListener);
-    ws.current.addEventListener("error", onErrorListener);
-    ws.current.addEventListener("message", onMessageListener);
-    // return () => {
-    //   if (!ws.current) {
-    //     return;
-    //   }
-    //   console.info("Removing pubsub Socket listeners");
-    //   ws.current.removeEventListener("open", onOpenListener);
-    //   ws.current.removeEventListener("close", onCloseListener);
-    //   ws.current.removeEventListener("error", onErrorListener);
-    //   ws.current.removeEventListener("message", onMessageListener);
-    // };
-  };
+    ws.addEventListener("open", onOpenListener);
+    ws.addEventListener("close", onCloseListener);
+    ws.addEventListener("error", onErrorListener);
+    ws.addEventListener("message", onMessageListener);
+    return () => {
+      if (!ws) {
+        return;
+      }
+      console.info("Removing pubsub Socket listeners");
+      ws.removeEventListener("open", onOpenListener);
+      ws.removeEventListener("close", onCloseListener);
+      ws.removeEventListener("error", onErrorListener);
+      ws.removeEventListener("message", onMessageListener);
+    };
+  }, [ws]);
 
-  const connect = () => {
-    console.log("PubSub connecting...");
-    if (ws.current) {
-      return;
-    }
+  const send = useMemo(() => {
+    console.log("[SEND] Update");
+    return (message: ClientMessage) => {
+      if (!ws) {
+        console.error("trying to send event without a socket");
+        return;
+      }
 
-    ws.current = new WebSocket("ws://localhost:8000/ws/sub");
-    updateListeners();
-  };
+      ws.send(JSON.stringify(message));
+    };
+  }, [ws]);
 
-  const subscribe = (channel: string) => {
-    if (!ws.current) {
-      console.info("Connect and subscribe");
-      connect();
-      const l = () => {
-        _subscribe(channel);
-        ws.current!.removeEventListener("open", l);
-      };
-      ws.current!.addEventListener("open", l);
-      return;
-    }
+  const firstMessage = useRef<ClientMessage>();
 
-    console.info("just sub");
-    _subscribe(channel);
-  };
+  const connectWithMessage = useCallback((startingMessage: ClientMessage) => {
+    firstMessage.current = startingMessage;
+    setWs(new WebSocket("ws://localhost:8000/ws/sub"));
+  }, []);
 
-  const _subscribe = (channel: string) => {
-    console.info("Subscribing to ", channel);
-    send({
-      event: "subscribe",
-      message: {
-        eventName: channel,
-      },
-    });
-  };
+  const subscribe = useCallback(
+    (channel: string) => {
+      const message = {
+        event: "subscribe",
+        message: {
+          eventName: channel,
+        },
+      } satisfies ClientMessage;
+
+      if (!ws) {
+        console.log("[SUB] Connecting before subscribing...");
+        connectWithMessage(message);
+        return;
+      }
+      send(message);
+    },
+    [ws, send]
+  );
+
   const unsubscribe = (channel: string) => {
-    if (!ws.current) {
+    if (!ws) {
       console.error("trying to unsub before creating a socket");
       return;
     }

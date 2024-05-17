@@ -123,6 +123,7 @@ async fn handle_register(
 
     if let Some(user_channel) = manager_state.user_channels.get_mut(&user_id) {
         user_channel.connections += 1;
+        println!("Connecting user {user_id} as {}", user_channel.connections);
 
         register_tx
             .send(ManagerRegisterResponse {
@@ -134,6 +135,7 @@ async fn handle_register(
         return Ok(());
     }
 
+    println!("New connection for user {user_id}");
     let (user_tx, user_rx) = broadcast::channel(10);
     manager_state.user_channels.insert(
         user_id,
@@ -231,13 +233,15 @@ async fn handle_drop_user(
     let ManagerDropUserMessage { user_id } = message;
 
     let user_connection = manager_state.user_channels.get_mut(&user_id).unwrap();
-    if user_connection.connections > 1 {
+    if user_connection.connections > 0 {
         user_connection.connections -= 1;
         return Ok(());
+    } else {
+        println!("dropping user {user_id}");
+        manager_state.user_channels.remove(&user_id);
     }
 
     let user_cache = &mut manager_state.user_events;
-
 
     let user_events = match user_cache.remove(&user_id) {
         Some(u) => u,
@@ -252,9 +256,19 @@ async fn handle_drop_user(
     }
 
     let events_map = &mut manager_state.subscriptions;
+
     for event in user_events.iter() {
         let event_map = events_map.get_mut(event).expect("To get event");
+
         event_map.remove(&user_id);
+
+        if event_map.is_empty() {
+            manager_state
+                .redis_tx
+                .send(RedisChannelCommands::Unsub(event.clone()))
+                .await
+                .expect("To unsub from redis");
+        }
     }
 
     Ok(())

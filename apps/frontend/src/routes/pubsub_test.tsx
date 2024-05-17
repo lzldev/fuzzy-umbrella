@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef } from "react";
-import { WebSocketProvider } from "~/context/WebsocketContext";
 import { usePubSub } from "~/hooks/usePubSub";
 import { useToast } from "~/shadcn/ui/use-toast";
 
@@ -9,14 +8,6 @@ export const Route = createFileRoute("/pubsub_test")({
 });
 
 function PUBSUBTEST() {
-  return (
-    <WebSocketProvider config={{ url: "ws://localhost:8000/ws/chat" }}>
-      <WSTESTInner />
-    </WebSocketProvider>
-  );
-}
-
-function WSTESTInner() {
   const txt = useRef<HTMLInputElement>(null!);
   const { toast } = useToast();
   const { unsubscribe, subscribe } = usePubSub({
