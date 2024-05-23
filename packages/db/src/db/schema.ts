@@ -1,8 +1,8 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
-  id: integer("id").primaryKey(),
+  id: uuid("id").primaryKey().unique().defaultRandom(),
   email: varchar("email").unique().notNull(),
   username: varchar("username").notNull(),
   image_url: varchar("image_url"),
@@ -15,13 +15,13 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 export const posts = pgTable("posts", {
-  id: varchar("id").primaryKey(),
+  id: uuid("id").primaryKey().unique().defaultRandom(),
   content: varchar("content").notNull(),
   imageKey: varchar("image_key").notNull(),
   createdAt: varchar("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
-  userId: integer("user_id")
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 });
