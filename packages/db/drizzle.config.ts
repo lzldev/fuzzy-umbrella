@@ -1,12 +1,13 @@
 import "dotenv/config";
-import type { Config } from "drizzle-kit";
+import { defineConfig } from "drizzle-kit";
 
-export default {
-  driver: "turso",
-  schema: "./src/lib/db/schema.ts",
+export default defineConfig({
+  strict: true,
+  verbose: true,
+  dialect: "postgresql",
+  schema: "./src/db/schema.ts",
   out: "./migrations",
   dbCredentials: {
-    url: process.env.TURSO_CONNECTION_URL!,
-    authToken: process.env.TURSO_AUTH_TOKEN!,
+    url: process.env.PG_URL!,
   },
-} satisfies Config;
+});

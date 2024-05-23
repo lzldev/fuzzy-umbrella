@@ -1,32 +1,24 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: integer("id").primaryKey(),
-  email: text("email").unique().notNull(),
-  username: text("username").notNull(),
-  image_url: text("image_url"),
-  clerk_id: text("clerk_id").unique().notNull(),
-  clerk_updated_at: integer("clerk_updated_at")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+  email: varchar("email").unique().notNull(),
+  username: varchar("username").notNull(),
+  image_url: varchar("image_url"),
+  clerk_id: varchar("clerk_id").unique().notNull(),
+  clerk_updated_at: timestamp("clerk_updated_at").defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
   posts: many(posts),
 }));
 
-export const posts = sqliteTable("posts", {
-  id: text("id", {
-    mode: "text",
-  })
-    .unique()
-    .primaryKey(),
-  content: text("content", {
-    length: 150,
-  }).notNull(),
-  imageKey: text("image_key").notNull(),
-  createdAt: text("created_at")
+export const posts = pgTable("posts", {
+  id: varchar("id").primaryKey(),
+  content: varchar("content").notNull(),
+  imageKey: varchar("image_key").notNull(),
+  createdAt: varchar("created_at")
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
   userId: integer("user_id")
