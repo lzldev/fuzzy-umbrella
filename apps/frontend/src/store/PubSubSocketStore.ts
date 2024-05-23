@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 export type WebsocketStore = {
   ws: WebSocket | undefined;
-  openSocket: (ws: WebSocket | undefined) => void;
+  openSocket: () => void;
   closeSocket: () => void;
   tickets: number;
   addTicket: () => void;
@@ -12,10 +12,9 @@ export type WebsocketStore = {
 export const useWebSocketStore = create<WebsocketStore>()((set, get) => ({
   ws: undefined,
   tickets: 0,
-  openSocket(ws) {
+  openSocket() {
     set((store) => {
       if (store.ws && store.tickets > 0) {
-        console.log("Trying to open twice");
         return {};
       }
 

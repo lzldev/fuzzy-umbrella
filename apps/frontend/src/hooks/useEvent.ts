@@ -13,7 +13,6 @@ export function useEvent(options: useEventOptions) {
 
   const { subscribe, unsubscribe } = usePubSub({
     onEvent(message) {
-      console.log("use event event");
       if (message.event !== "received") {
         return;
       }

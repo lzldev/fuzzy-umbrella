@@ -1,11 +1,13 @@
 import { ServerMessage, ClientMessage } from "artspace-shared";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useToast } from "~/shadcn/ui/use-toast";
-import { useWebSocketStore } from "~/store/WebsocketStore";
+import { useWebSocketStore } from "~/store/PubSubSocketStore";
 
 export type PubSubOptions = {
   onEvent: (message: ServerMessage) => any;
 };
+
+const eventMap = new Map();
 
 export function usePubSub(options: PubSubOptions) {
   const { toast } = useToast();
@@ -14,32 +16,42 @@ export function usePubSub(options: PubSubOptions) {
     useWebSocketStore();
 
   const onEvent = useCallback(options.onEvent, [options.onEvent]);
+  const isOpen = useRef<boolean>(!!ws);
+  const messageQueue = useRef<ClientMessage[]>([]);
+
+  useEffect(() => {
+    addTicket();
+    return () => {
+      removeTicket();
+      closeSocket();
+    };
+  }, []);
 
   useEffect(() => {
     if (!ws) {
       return;
     }
-    console.log("[PUBSUB] useEffect");
 
-    const onOpenListener = (event: Event) => {
-      isOpen.current = true;
-
-      if (startingMessages.current.length === 0) {
-        return;
-      }
-
-      for (const message of startingMessages.current) {
-        send(message);
-      }
-
-      startingMessages.current.length = 0;
-    };
     const onCloseListener = (event: Event) => {};
     const onErrorListener = (event: Event) => {
       toast({
         title: "Error",
         description: "PubSub error",
       });
+    };
+
+    const onOpenListener = (event: Event) => {
+      isOpen.current = true;
+
+      if (messageQueue.current.length === 0) {
+        return;
+      }
+
+      for (const message of messageQueue.current) {
+        send(message);
+      }
+
+      messageQueue.current.length = 0;
     };
 
     const onMessageListener = (event: MessageEvent<any>) => {
@@ -51,7 +63,6 @@ export function usePubSub(options: PubSubOptions) {
           title: "Error",
           description: "Invalid PubSub Message",
         });
-        console.error("PUBSUB JSON PARSE ERROR", e);
         return;
       }
 
@@ -66,7 +77,6 @@ export function usePubSub(options: PubSubOptions) {
       if (!ws) {
         return;
       }
-      console.info("Removing pubsub Socket listeners");
       ws.removeEventListener("open", onOpenListener);
       ws.removeEventListener("close", onCloseListener);
       ws.removeEventListener("error", onErrorListener);
@@ -74,58 +84,58 @@ export function usePubSub(options: PubSubOptions) {
     };
   }, [ws]);
 
-  useEffect(() => {
-    addTicket();
-    return () => {
-      removeTicket();
-      closeSocket();
-    };
-  }, []);
+  const send = (message: ClientMessage) => {
+    const { ws } = useWebSocketStore.getState();
 
-  const send = useMemo(() => {
-    console.log("[SEND] Update");
-    return (message: ClientMessage) => {
-      if (!ws) {
-        console.error("trying to send event without a socket");
-        return;
-      }
+    if (!ws) {
+      return;
+    } else if (!isOpen.current) {
+      return;
+    }
 
-      ws.send(JSON.stringify(message));
-    };
-  }, [ws]);
+    ws.send(JSON.stringify(message));
+  };
 
-  const isOpen = useRef<boolean>(false);
-  const startingMessages = useRef<ClientMessage[]>([]);
+  const subscribe = (channel: string) => {
+    const { ws } = useWebSocketStore.getState();
+    const subscribeMessage = {
+      event: "subscribe",
+      message: {
+        eventName: channel,
+      },
+    } satisfies ClientMessage;
 
-  const connectWithMessage = useCallback((startingMessage: ClientMessage) => {
-    startingMessages.current.push(startingMessage);
-    console.log("setting ws", ws);
-    openSocket();
-  }, []);
+    if (!isOpen.current) {
+      messageQueue.current.push(subscribeMessage);
+    }
 
-  const subscribe = useCallback(
-    (channel: string) => {
-      const subscribeMessage = {
-        event: "subscribe",
-        message: {
-          eventName: channel,
-        },
-      } satisfies ClientMessage;
+    const n = eventMap.get(channel);
+    if (n) {
+      eventMap.set(channel, n + 1);
+      return;
+    } else {
+      eventMap.set(channel, 1);
+    }
 
-      if (!ws) {
-        console.log("[SUB] Connecting before subscribing...");
-        connectWithMessage(subscribeMessage);
-        return;
-      } else if (!isOpen.current) {
-        console.log("[SUB] Just appending message");
-        startingMessages.current.push(subscribeMessage);
-      }
-      send(subscribeMessage);
-    },
-    [ws, send]
-  );
+    if (!ws) {
+      openSocket();
+      return;
+    }
+
+    send(subscribeMessage);
+  };
 
   const unsubscribe = (channel: string) => {
+    const { ws } = useWebSocketStore.getState();
+    const n = eventMap.get(channel);
+
+    if (n && n > 1) {
+      eventMap.set(channel, n - 1);
+      return;
+    } else if (n === 1) {
+      eventMap.delete(channel);
+    }
+
     if (!ws) {
       return;
     }

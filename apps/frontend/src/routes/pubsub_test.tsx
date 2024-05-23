@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEvent } from "~/hooks/useEvent";
 import { usePubSub } from "~/hooks/usePubSub";
 import { useToast } from "~/shadcn/ui/use-toast";
@@ -9,10 +9,42 @@ export const Route = createFileRoute("/pubsub_test")({
 });
 
 function PUBSUBTEST() {
+  const [show, setShow] = useState(false);
+  const [show2, setShow2] = useState(false);
+  const { subscribe, unsubscribe } = usePubSub({
+    onEvent(message) {
+      console.info("That");
+      console.info(message);
+    },
+  });
+
+  useEffect(() => {
+    // subscribe("CHAT:GLOBAL");
+    return () => {
+      unsubscribe("CHAT:GLOBAL");
+    };
+  }, []);
+
   return (
     <>
-      <PUBSUBTESTER />
-      <PUBSUBTESTER />
+      <button
+        className="text-white bg-pink-600 hover:bg-neutral-600"
+        onClick={() => {
+          setShow(!show);
+        }}
+      >
+        {show ? "CLOSE" : "SHOW"}
+      </button>
+      {show && <PUBSUBTESTER />}
+      <button
+        className="text-white bg-pink-600 hover:bg-neutral-600"
+        onClick={() => {
+          setShow2(!show2);
+        }}
+      >
+        {show2 ? "CLOSE" : "SHOW"}
+      </button>
+      {show2 && <PUBSUBTESTER />}
     </>
   );
 }
@@ -20,7 +52,7 @@ function PUBSUBTESTER() {
   const txt = useRef<HTMLInputElement>(null!);
   const { toast } = useToast();
   const { lastEvent } = useEvent({
-    events: ["CHAT:GLOBAL"],
+    events: ["CHAT:GLOBAL", "WAWAWA", "TRUE"],
     onEvent(message) {
       console.log("useevent");
       toast({ title: "USEEVENT", description: message.message.eventName });
@@ -33,8 +65,6 @@ function PUBSUBTESTER() {
       if (message.event !== "received") {
         return;
       }
-
-      toast({ title: "Event", description: message.message.eventName });
     },
   });
 
@@ -61,7 +91,6 @@ function PUBSUBTESTER() {
                 className="text-white bg-pink-600 hover:bg-neutral-600"
                 onClick={() => {
                   const v = txt.current?.value;
-
                   unsubscribe(v);
                 }}
               >
@@ -71,8 +100,6 @@ function PUBSUBTESTER() {
           </div>
         </div>
       </div>
-
-      <div></div>
     </>
   );
 }

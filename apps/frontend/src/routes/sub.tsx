@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ClientMessage } from "artspace-shared";
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ClientMessage } from "artspace-shared";
-import { useToast } from "~/shadcn/ui/use-toast";
 
 export const Route = createFileRoute("/sub")({
   component: WSComponent,
@@ -50,7 +49,6 @@ function WSComponent() {
     };
   }, []);
 
-  const { toast } = useToast();
   return (
     <>
       <div className="flex flex-col w-full h-screen-minus-navbar">
@@ -60,17 +58,6 @@ function WSComponent() {
               Connected:
               <span className="font-bold">{isConnected ? "YES" : "NO"}</span>
             </div>
-            <button
-              onClick={() => {
-                toast({
-                  title: "AAAAAAAAAAAAAAAAAAA",
-                  content: "THE BUGS ARE BACK",
-                });
-              }}
-            >
-              aaaa
-            </button>
-
             <button
               className={clsx(
                 "bg-fuchsia-500 p-2 rounded-md text-white hover:ring-1 ring-white"

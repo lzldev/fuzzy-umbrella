@@ -164,18 +164,16 @@ async fn handle_subscribe(
         event_name,
     } = message;
 
-    let subscriptions = &mut manager_state.subscriptions;
-
-    subscriptions
+    manager_state
+        .subscriptions
         .entry(event_name.clone())
         .and_modify(|evt| {
             evt.insert(user_name.clone());
         })
         .or_insert_with(|| HashSet::from([user_name.clone()]));
 
-    let user_cache = &mut manager_state.user_events;
-
-    user_cache
+    manager_state
+        .user_events
         .entry(user_name)
         .and_modify(|user_channels| user_channels.push(event_name.clone()))
         .or_insert_with(|| vec![event_name.clone()]);
@@ -185,6 +183,7 @@ async fn handle_subscribe(
         .send(RedisChannelCommands::Sub(event_name))
         .await
         .expect("To send message to channel");
+
     Ok(())
 }
 
@@ -197,14 +196,13 @@ async fn handle_unsubscribe(
         user_id,
     } = message;
 
-    let map = &mut manager_state.subscriptions;
-    let event = match map.get_mut(&event_name) {
+    let event = match manager_state.subscriptions.get_mut(&event_name) {
         Some(t) => t,
         None => return Ok(()),
     };
 
     if event.remove(&user_id) {
-        dbg!("Unsubbing user from event.");
+        println!("Unsubbing {user_id} from {event_name}.");
     }
 
     if event.is_empty() {
@@ -215,13 +213,17 @@ async fn handle_unsubscribe(
             .expect("To unsub from redis");
     }
 
-    let map = &mut manager_state.user_events;
-    let user_map = map.get_mut(&user_id).unwrap();
-    let idx = user_map
+    let user_events = manager_state
+        .user_events
+        .get_mut(&user_id)
+        .expect("User didn't have event in cache");
+
+    let idx = user_events
         .iter()
         .position(|r| *r == event_name)
         .expect("To find index in user_map");
-    let _ = user_map.swap_remove(idx);
+
+    let _ = user_events.swap_remove(idx);
 
     Ok(())
 }
@@ -233,20 +235,19 @@ async fn handle_drop_user(
     let ManagerDropUserMessage { user_id } = message;
 
     let user_connection = manager_state.user_channels.get_mut(&user_id).unwrap();
+
     if user_connection.connections > 0 {
         user_connection.connections -= 1;
         return Ok(());
     } else {
-        dbg!("User dropped");
+        println!("User dropped");
         manager_state.user_channels.remove(&user_id);
     }
 
-    let user_cache = &mut manager_state.user_events;
-
-    let user_events = match user_cache.remove(&user_id) {
+    let user_events = match manager_state.user_events.remove(&user_id) {
         Some(u) => u,
         None => {
-            dbg!("User had no events");
+            println!("User had no events");
             return Ok(());
         }
     };
@@ -255,10 +256,11 @@ async fn handle_drop_user(
         return Ok(());
     }
 
-    let events_map = &mut manager_state.subscriptions;
-
     for event in user_events.iter() {
-        let event_map = events_map.get_mut(event).expect("To get event");
+        let event_map = manager_state
+            .subscriptions
+            .get_mut(event)
+            .expect("To get event");
 
         event_map.remove(&user_id);
 

@@ -27,8 +27,20 @@ import { UserModule } from "./user/user.module";
 })
 export class ApiModule {}
 
-/**
+const routeModulesThrough = (route: string, modules: any[]) => {
+  return [
+    ...modules,
+    RouterModule.register(
+      modules.map((module) => ({
+        path: route,
+        module,
+      }))
+    ),
+  ];
+};
 
+/**
+ 
 @ApiModule ? 
 @RestModule({
 path:'/api'
