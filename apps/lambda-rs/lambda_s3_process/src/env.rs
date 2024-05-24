@@ -1,81 +1,33 @@
-use std::collections::HashMap;
-use std::env;
+use artspace_core::env::{EnvContainer, EnvEnum, EnvMap};
 use strum::EnumIter;
-use strum::IntoEnumIterator;
-
-pub trait EnvVar {
-    fn var_name(var: &Self) -> &'static str;
-    fn get_var_name(&self) -> &'static str {
-        Self::var_name(self)
-    }
-}
-
-pub type EnvHashMap<'a> = HashMap<&'a str, String>;
-pub trait HashMapInternal<V>: EnvVar
-where
-    V: IntoEnumIterator,
-{
-}
-
-pub trait EnumMapEnv<'a, V, T>
-where
-    T: IntoEnumIterator,
-    V: IntoEnumIterator + EnvVar,
-{
-    fn get_map(&'a self) -> &'a EnvHashMap<'a>;
-    fn return_map(map: EnvHashMap<'a>) -> Self;
-    fn load_env() -> Self
-    where
-        Self: Sized,
-    {
-        let mut hash_map = EnvHashMap::<'a>::new();
-
-        for var in V::iter() {
-            let v2 = var as V;
-            let name = v2.get_var_name();
-            let var = env::var(name).expect(format!("{} not defined", name).as_str());
-            hash_map.insert(name, var);
-        }
-
-        Self::return_map(hash_map)
-    }
-    fn get(&'a self, var: V) -> &String {
-        let map = self.get_map();
-        map.get(var.get_var_name()).unwrap() //Value has to be defined
-    }
-}
 
 #[derive(EnumIter)]
-pub enum LambdaEnv {
+pub enum ProcessLambdaVars {
     OutputBucket,
     RedisURL,
-    TursoURL,
-    TursoToken,
+    PostgresPoolURL,
 }
 
-// let env_vars = vec!["TURSO_CONNECTION_URL", "TURSO_AUTH_TOKEN", "WEBHOOK_SECRET"];
-
-impl EnvVar for LambdaEnv {
+impl EnvEnum for ProcessLambdaVars {
     fn var_name(var: &Self) -> &'static str {
         match var {
             Self::OutputBucket => "OUTPUT_BUCKET",
-            Self::TursoURL => "TURSO_URL",
-            Self::TursoToken => "TURSO_TOKEN",
             Self::RedisURL => "REDIS_URL",
+            Self::PostgresPoolURL => "DATABASE_URL",
         }
     }
 }
 
-pub struct EnvTwo<'env> {
-    map: EnvHashMap<'env>,
+pub struct ProcessLambdaEnv {
+    map: EnvMap,
 }
 
-impl<'env> EnumMapEnv<'env, LambdaEnv, LambdaEnv> for EnvTwo<'env> {
-    fn get_map(&'env self) -> &'env EnvHashMap<'env> {
+impl EnvContainer<ProcessLambdaVars> for ProcessLambdaEnv {
+    fn get_map(&self) -> &EnvMap {
         &self.map
     }
 
-    fn return_map(map: EnvHashMap<'env>) -> Self {
+    fn with_env_map(map: EnvMap) -> Self {
         Self { map }
     }
 }

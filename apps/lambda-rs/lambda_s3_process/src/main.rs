@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use anyhow::anyhow;
 use artspace_core::{
+    env::EnvContainer,
     image_processing::{
         process::{ProcessingPlan, ProcessingPlanType},
         process_image_vec,
@@ -18,14 +19,11 @@ use lambda_runtime::{
     Error, LambdaEvent,
 };
 
-use lambda_s3_process::{
-    env::{EnumMapEnv, LambdaEnv},
-    utils::parse_object_key,
-    SharedContext,
-};
+use lambda_s3_process::{env::ProcessLambdaVars, utils::parse_object_key, SharedContext};
 
 use redis::AsyncCommands;
-use tokio::{task::JoinSet, time::Instant};
+use tokio::task::JoinSet;
+use uuid::Uuid;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing::subscriber::fmt().without_time().json().init();
@@ -47,16 +45,31 @@ async fn main() -> Result<(), Error> {
     .await
 }
 
-/// This is the main body for the function.
-/// Write your code inside it.
-/// There are some code example in the following URLs:
-/// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
-/// - https://github.com/aws-samples/serverless-rust-demo/
-async fn function_handler<'a>(
+pub fn get_plan(object_key: &str) -> Vec<ProcessingPlan> {
+    vec![
+        ProcessingPlan {
+            name: format!("{object_key}_optimized.webp"),
+            process: ProcessingPlanType::Optimize,
+        },
+        ProcessingPlan {
+            name: format!("{object_key}_thumb_small.jpeg"),
+            process: ProcessingPlanType::Thumbnail((128, 128)),
+        },
+        ProcessingPlan {
+            name: format!("{object_key}_thumb_medium.jpeg"),
+            process: ProcessingPlanType::Thumbnail((256, 256)),
+        },
+        ProcessingPlan {
+            name: format!("{object_key}_thumb_large.jpeg"),
+            process: ProcessingPlanType::Thumbnail((512, 512)),
+        },
+    ]
+}
+
+async fn function_handler(
     event: LambdaEvent<S3Event>,
-    context: &'a SharedContext<'a>,
+    context: &SharedContext,
 ) -> Result<(), anyhow::Error> {
-    // Extract some useful information from the request
     let payload = event.payload;
 
     info!("EVENT {payload:?}");
@@ -114,7 +127,10 @@ async fn function_handler<'a>(
         .await
         .expect("Couldn't process images.");
 
-    let output_bucket = context.env.get(LambdaEnv::OutputBucket).to_owned();
+    let output_bucket = context
+        .env
+        .get_env_var(ProcessLambdaVars::OutputBucket)
+        .to_owned();
 
     let mut join_set = output
         .into_iter()
@@ -163,7 +179,6 @@ async fn function_handler<'a>(
 
     info!("Finished uploading");
 
-    let start = Instant::now();
     let post = {
         let mut redis = context
             .redis_client
@@ -195,47 +210,23 @@ async fn function_handler<'a>(
         post
     };
 
-    info!("Post Processing time:{:?}", start.elapsed());
     info!("Post: {:?}", post);
 
-    let db = context
-        .database
-        .connect()
-        .expect("Couldn't open connection to turso.");
+    let user_uuid = Uuid::parse_str(post.user_id.as_str()).expect("To parse user UUID");
 
-    let insert = db
-        .execute(
-            "INSERT INTO posts (id,content,image_key,user_id) VALUES (?,?,?,?)",
-            libsql::params![post.id, post.content, object_key, post.user_id],
-        )
-        .await;
+    let post_insert =
+        sqlx::query("INSERT INTO posts (id,content,image_key,user_id) VALUES ($1,$2,$3,$4)")
+            .bind(post.id)
+            .bind(post.content)
+            .bind(object_key)
+            .bind(user_uuid)
+            .execute(context.database.lock().await.as_mut())
+            .await;
 
-    match insert {
-        Ok(r) => info!("Post Insert Success {r:?}"),
+    match post_insert {
+        Ok(r) => info!("Post Insert Success {:?}", r.rows_affected()),
         Err(err) => error!("Failed to insert Post {err:#?}"),
-    }
+    };
 
     Ok(())
-}
-
-//TODO: Make this a json configuration. imported from .... .somehwere.....
-pub fn get_plan(object_key: &str) -> Vec<ProcessingPlan> {
-    vec![
-        ProcessingPlan {
-            name: format!("{object_key}_optimized.webp"),
-            process: ProcessingPlanType::Optimize,
-        },
-        ProcessingPlan {
-            name: format!("{object_key}_thumb_small.jpeg"),
-            process: ProcessingPlanType::Thumbnail((128, 128)),
-        },
-        ProcessingPlan {
-            name: format!("{object_key}_thumb_medium.jpeg"),
-            process: ProcessingPlanType::Thumbnail((256, 256)),
-        },
-        ProcessingPlan {
-            name: format!("{object_key}_thumb_large.jpeg"),
-            process: ProcessingPlanType::Thumbnail((512, 512)),
-        },
-    ]
 }

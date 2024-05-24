@@ -28,8 +28,11 @@ strum = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-#TURSO
-# libsql = { workspace = true }
+#SQL
+sqlx = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+
 
 #AWS 
 lambda_runtime = { workspace = true }
