@@ -1,6 +1,6 @@
 export * from "./posts";
 
-import { posts, users, users2 } from "@artspace/db";
+import { posts, users } from "@artspace/db";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,7 +9,6 @@ export const SomethingSchema = z.object({
   world: z.string(),
 });
 
-export const testSchema = createSelectSchema(users2);
 export const selectUsersSchema = createSelectSchema(users);
 export const selectPostsSchema = createSelectSchema(posts);
 

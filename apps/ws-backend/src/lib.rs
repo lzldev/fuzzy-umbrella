@@ -7,7 +7,6 @@ use std::{
     collections::VecDeque,
     ops::Deref,
     sync::{atomic::AtomicIsize, Arc},
-    time::Duration,
 };
 
 use data::ChatMessage;

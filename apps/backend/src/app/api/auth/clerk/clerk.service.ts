@@ -15,12 +15,12 @@ export class ClerkService {
   @RedisClient()
   private redis: RedisClientProvider;
 
-  public async getUserIdFromClerkID(clerkId: string): Promise<number> {
+  public async getUserIdFromClerkID(clerkId: string): Promise<string> {
     const redisKey = clerkIdtoUserIdKey(clerkId);
     const value = await this.redis.get(redisKey);
 
     if (value) {
-      return parseInt(value);
+      return value;
     }
 
     const query = await this.database.query.users.findFirst({
