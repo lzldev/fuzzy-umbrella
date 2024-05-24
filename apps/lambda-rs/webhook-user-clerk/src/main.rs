@@ -6,6 +6,7 @@ use lambda_http::{
     Body, Error, Request, Response,
 };
 use serde_json::json;
+use sqlx::{Connection, PgConnection};
 use webhook_user_clerk::{
     clerk::{update_user_metadata, WebhookMessage},
     env::WebhookClerkEnvVars,
@@ -78,31 +79,18 @@ async fn create_user(
         .email_addresses
         .first()
         .expect("User has no email address")
-        .clone();
+        .clone()
+        .email_address;
 
-    let db = context.database.connect().unwrap();
-    let clerk_id = event.data.id;
-
-    let mut rows = db.query(
-        "INSERT INTO users (clerk_id,username,email, image_url, clerk_updated_at) VALUES (?, ?, ?, ?, ?) RETURNING id,clerk_id",
-        libsql::params![
-            clerk_id,
-            event.data.username,
-            email.email_address,
-            event.data.image_url,
-            event.data.updated_at
-        ],
-    )
-    .await?;
-
-    let new_user = libsql::de::from_row::<PartialUser>(
-        &rows
-            .next()
-            .await
-            .expect("Insert query didn't new value.")
-            .unwrap(),
-    )
-    .expect("Couldn't serialize partial user");
+    let new_user = sqlx::query_as::<_,PartialUser>("INSERT INTO users (clerk_id,username,email, image_url, clerk_updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id,clerk_id")
+        .bind(event.data.id)
+        .bind(event.data.username.expect("Clerk user without Username"))
+        .bind(email)
+        .bind(event.data.image_url)
+        .bind(chrono::DateTime::from_timestamp(event.data.updated_at as i64, 0))
+        .fetch_one(context.database.lock().await.as_mut())
+        .await
+        .expect("To insert user");
 
     update_user_metadata(new_user, &context)
         .await
@@ -133,19 +121,26 @@ async fn update_user(
         .expect("User has no email address")
         .clone();
 
-    let db = context.database.connect().unwrap();
-
-    db.execute(
-        r#"UPDATE users SET "username" = ?, "email" = ?, "image_url" = ?, "clerk_updated_at" = ? WHERE "clerk_id" = ?"#,
-        libsql::params![
-            event.data.username,
-            email.email_address,
-            event.data.image_url,
-            event.data.updated_at,
-            event.data.id,
-        ],
+    let mut db = PgConnection::connect(
+        context
+            .env
+            .get_env_var(WebhookClerkEnvVars::PostgresPoolURL)
+            .as_str(),
     )
-    .await?;
+    .await
+    .expect("db did not connect");
+
+    let update_user = sqlx::query(r#"UPDATE users SET "username" = $1, "email" = $2, "image_url" = $3, "clerk_updated_at" = $4 WHERE "clerk_id" = $5"#)
+        .bind(event.data.username)
+        .bind(email.email_address)
+        .bind(event.data.image_url)
+        .bind(chrono::DateTime::from_timestamp(event.data.updated_at as i64, 0).expect("Couldn't parse event timestamp into DateTime"))
+        .bind(event.data.id)
+        .execute(&mut db)
+        .await
+        .expect("to update user").rows_affected();
+
+    info!("Rows Updated: {}", update_user);
 
     Ok(Response::builder()
         .status(StatusCode::OK)

@@ -29,7 +29,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 #TURSO
-libsql = { workspace = true }
+# libsql = { workspace = true }
 
 #AWS 
 lambda_runtime = { workspace = true }

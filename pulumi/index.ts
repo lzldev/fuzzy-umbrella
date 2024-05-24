@@ -1,10 +1,7 @@
 import * as aws from "@pulumi/aws";
-import * as archive from "@pulumi/archive";
-import { ManagedPolicies, ManagedPolicy, Principals } from "@pulumi/aws/iam";
+import { ManagedPolicy } from "@pulumi/aws/iam";
 import { Runtime } from "@pulumi/aws/lambda";
-import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
-import { Archive } from "@pulumi/pulumi/asset";
 import { readFileSync } from "fs";
 
 const svixIps = (() => {
@@ -127,13 +124,13 @@ const clerkWebhookHandler = new aws.lambda.Function(clerkWebhookName, {
     variables: pulumi
       .all([
         config.getSecret("WEBHOOK_SECRET")!,
-        config.getSecret("TURSO_URL")!,
-        config.getSecret("TURSO_TOKEN")!,
+        config.getSecret("DATABASE_URL")!,
+        config.getSecret("CLERK_SECRET_KEY")!,
       ])
-      .apply(([webhookSecret, tursoUrl, tursoToken]) => ({
+      .apply(([webhookSecret, databaseUrl, clerkSecret]) => ({
         WEBHOOK_SECRET: webhookSecret,
-        TURSO_URL: tursoUrl,
-        TURSO_TOKEN: tursoToken,
+        DATABASE_URL: databaseUrl,
+        CLERK_SECRET_KEY: clerkSecret,
       })),
   },
 });

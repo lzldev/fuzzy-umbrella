@@ -8,5 +8,5 @@ use ts_rs::TS;
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ClerkPrivateMetadata {
-    pub user_id: usize,
+    pub user_id: String,
 }
