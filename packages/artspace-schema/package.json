@@ -3,17 +3,15 @@
   "version": "1.0.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./src/index.ts",
   "scripts": {
     "dev": "tsup --watch ./src",
     "build": "tsup"
   },
   "devDependencies": {
-    "drizzle-zod": "^0.5.1",
     "@artspace/db": "workspace:^",
+    "drizzle-zod": "^0.5.1",
     "tsup": "^8.0.2"
   },
-  "dependencies": {},
   "peerDependencies": {
     "zod": "^3.22.4"
   }

@@ -5,17 +5,15 @@ use strum::EnumIter;
 pub enum WebhookClerkEnvVars {
     WebhookSecret,
     ClerkSecret,
-    TursoURL,
-    TursoToken,
+    PostgresPoolURL,
 }
 
 impl EnvEnum for WebhookClerkEnvVars {
     fn var_name(var: &Self) -> &'static str {
         match var {
             WebhookClerkEnvVars::WebhookSecret => "WEBHOOK_SECRET",
-            WebhookClerkEnvVars::TursoURL => "TURSO_URL",
+            WebhookClerkEnvVars::PostgresPoolURL => "DATABASE_URL",
             WebhookClerkEnvVars::ClerkSecret => "CLERK_SECRET_KEY",
-            WebhookClerkEnvVars::TursoToken => "TURSO_TOKEN",
         }
     }
 }

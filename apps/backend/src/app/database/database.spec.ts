@@ -1,6 +1,6 @@
+import type { Connection } from "@artspace/db";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ConfigModule } from "~/app/config/config.module";
-import type { Connection } from "~/lib/db/connection";
 import {
   DatabaseProviderFactory,
   DatabaseProviderToken,

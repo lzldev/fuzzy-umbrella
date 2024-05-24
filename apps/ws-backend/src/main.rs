@@ -6,9 +6,8 @@ mod api;
 use artspace_core::env::EnvContainer;
 use rocket::{http::Method, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use tokio::time::Duration;
 use ws_backend::{
-    auth::{ClerkFairing, ClerkUser, WSBackendJWKS},
+    auth::{ClerkFairing, WSBackendJWKS},
     data::ChatMessage,
     env::WSBackendEnvVars,
     WSBackendState,
@@ -59,7 +58,7 @@ async fn launch() -> _ {
 }
 
 #[get("/ping")]
-fn ping_get(user: ClerkUser<'_>) -> &'static str {
+fn ping_get() -> &'static str {
     "Pong"
 }
 

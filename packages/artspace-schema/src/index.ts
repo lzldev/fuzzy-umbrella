@@ -1,4 +1,5 @@
 export * from "./posts";
+
 import { posts, users } from "@artspace/db";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";

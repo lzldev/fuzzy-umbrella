@@ -1,8 +1,9 @@
 use artspace_core::env::EnvContainer;
 use clerk_rs::{clerk::Clerk, ClerkConfiguration};
 use env::{WebhookClerkEnv, WebhookClerkEnvVars};
-use libsql::{Builder as TursoBuilder, Database as TursoDatabase};
 use serde::{Deserialize, Serialize};
+use sqlx::{Connection, PgConnection};
+use tokio::sync::Mutex;
 
 pub mod clerk;
 pub mod env;
@@ -10,7 +11,7 @@ pub mod webhooks;
 
 pub struct WebhookClerkContext {
     pub env: WebhookClerkEnv,
-    pub database: TursoDatabase,
+    pub database: Mutex<PgConnection>,
     pub clerk_client: Clerk,
 }
 
@@ -25,26 +26,27 @@ impl WebhookClerkContext {
             None,
         );
 
-        let clerk_client = Clerk::new(clerk_config);
-
-        let database = TursoBuilder::new_remote(
-            env.get_env_var(WebhookClerkEnvVars::TursoURL),
-            env.get_env_var(WebhookClerkEnvVars::TursoToken),
+        let mut database = PgConnection::connect(
+            env.get_env_var(WebhookClerkEnvVars::PostgresPoolURL)
+                .as_str(),
         )
-        .build()
         .await
-        .expect("Couldn't open connection to turso database.");
+        .expect("Couldn't connect to database");
+
+        database.ping().await.expect("Couldn't ping database");
+
+        let clerk_client = Clerk::new(clerk_config);
 
         Self {
             env,
-            database,
             clerk_client,
+            database: Mutex::new(database),
         }
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct PartialUser {
-    pub id: usize,
+    pub id: sqlx::types::Uuid,
     pub clerk_id: String,
 }

@@ -1,3 +1,4 @@
+import { User } from "@clerk/clerk-sdk-node";
 import {
   Controller,
   Get,
@@ -6,15 +7,14 @@ import {
   Inject,
   Param,
 } from "@nestjs/common";
-import { ProfileService } from "./profile.service";
-import { Public } from "../../auth/public.decorator";
 import {
   ClerkUser,
   ClerkUserID,
   ClerkUserParam,
 } from "../../auth/clerk/clerk.decorator";
 import { ClerkService } from "../../auth/clerk/clerk.service";
-import { User } from "@clerk/clerk-sdk-node";
+import { Public } from "../../auth/public.decorator";
+import { ProfileService } from "./profile.service";
 
 @Controller("profile")
 export class ProfileController {
@@ -39,7 +39,7 @@ export class ProfileController {
 
   @Public()
   @Get("/:id")
-  public async userProfile(@Param("id") id: number) {
+  public async userProfile(@Param("id") id: string) {
     const user = await this.profileService.getUserProfile(id);
 
     if (!user) {
