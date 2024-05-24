@@ -1,6 +1,11 @@
 import { relations, sql } from "drizzle-orm";
 import { pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+export const users2 = sqliteTable("users", {
+  id: text("ID"),
+});
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().unique().defaultRandom(),
   email: varchar("email").unique().notNull(),
@@ -42,4 +47,8 @@ export type SelectPost = typeof posts.$inferSelect;
 export type Schema = {
   posts: typeof posts;
   users: typeof users;
+};
+
+export type SomethingElse = {
+  ["isTable"]: true;
 };

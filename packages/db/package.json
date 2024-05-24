@@ -6,7 +6,8 @@
   "types": "./src/index.ts",
   "exports": {
     "import": "./dist/index.js",
-    "require": "./dist/index.cjs"
+    "require": "./dist/index.cjs",
+    "types": "./src/index.ts"
   },
   "scripts": {
     "dev": "tsup --watch ./src",
@@ -21,7 +22,7 @@
     "tsup": "^8.0.2"
   },
   "dependencies": {
-    "drizzle-orm": "^0.30.8",
+    "drizzle-orm": "^0.30.10",
     "postgres": "^3.4.4"
   }
 }
